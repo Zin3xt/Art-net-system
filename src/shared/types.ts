@@ -4,6 +4,7 @@ export type NetworkAdapterType = 'ethernet' | 'wifi' | 'virtual' | 'loopback' | 
 export type ArtNetEngineState = 'stopped' | 'starting' | 'running' | 'error'
 export type ArtNetNodeHealth = 'healthy' | 'stale' | 'offline'
 export type ArtNetNodeEventSeverity = 'info' | 'warning' | 'error'
+export type UniverseOutputMode = 'broadcast' | 'unicast'
 export type ArtNetNodeEventType =
   | 'engine-started'
   | 'engine-stopped'
@@ -112,6 +113,39 @@ export interface ArtNetEngineStatus {
   lastError: string | null
 }
 
+export interface UniverseDefinition {
+  id: string
+  name: string
+  net: number
+  subNet: number
+  universe: number
+  portAddress: number
+  enabled: boolean
+  outputMode: UniverseOutputMode
+  targetNodeId: string | null
+  targetNodeIp: string | null
+  channels: number[]
+  createdAt: number
+  updatedAt: number
+}
+
+export interface UniverseInput {
+  name: string
+  net: number
+  subNet: number
+  universe: number
+  enabled: boolean
+  outputMode: UniverseOutputMode
+  targetNodeId: string | null
+  targetNodeIp: string | null
+}
+
+export interface UniverseChannelUpdate {
+  universeId: string
+  channel: number
+  value: number
+}
+
 export interface DesktopBridge {
   app: {
     getInfo: () => Promise<AppInfo>
@@ -132,6 +166,15 @@ export interface DesktopBridge {
     getNodes: () => Promise<ArtNetNode[]>
     getEvents: () => Promise<ArtNetNodeEvent[]>
     clearEvents: () => Promise<void>
+  }
+  universes: {
+    list: () => Promise<UniverseDefinition[]>
+    create: (input: UniverseInput) => Promise<UniverseDefinition>
+    update: (id: string, input: UniverseInput) => Promise<UniverseDefinition>
+    delete: (id: string) => Promise<void>
+    duplicate: (id: string) => Promise<UniverseDefinition>
+    reset: (id: string) => Promise<UniverseDefinition>
+    setChannel: (update: UniverseChannelUpdate) => Promise<UniverseDefinition>
   }
   log: {
     info: (message: string) => Promise<void>
