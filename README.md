@@ -5,46 +5,48 @@ Electron desktop lighting-control system being developed in phases.
 ## Current development status
 
 ### Phase 1 — Electron Foundation
-Implemented:
 - Electron + React + TypeScript + Vite
-- Tailwind console UI
-- secure preload/contextBridge
+- secure renderer/preload/main architecture
 - local settings and logging
 
 ### Phase 2 — Network Interface Management
-Implemented:
-- IPv4 adapter discovery
+- native IPv4 adapter discovery
 - Art-Net NIC selection
 - IP / CIDR / subnet / broadcast information
-- interface persistence and reconnect visibility
 
-### Phase 3 — Art-Net Core Discovery Engine
-Implemented:
+### Phase 3 — Art-Net Core Discovery
 - UDP 6454 lifecycle
-- ArtPoll and ArtPollReply
-- automatic and manual discovery
-- node identity / capability / port parsing
-- packet counters
-- safe Start / Stop
+- ArtPoll / ArtPollReply
+- node discovery and packet parsing
 
 ### Phase 4 — Art-Net Node Monitoring
-Implemented on `feature/phase4-node-monitoring`:
-- dedicated Nodes workspace
-- Healthy / Stale / Offline states
-- ESP32-friendly health timing
-- first / last seen and last changed timestamps
-- response count per node
-- node search and health filters
-- detailed node information
-- Art-Net port / universe mapping
-- RDM / sACN capability indicators
-- node configuration-change detection
-- discovery / stale / offline / recovery / change events
-- engine and socket event history
-- per-device history
-- session monitoring history capped at 250 events
+- Healthy / Stale / Offline device health
+- ESP32 monitoring
+- port mapping and node capabilities
+- monitoring event history
 
-**ArtDmx and physical DMX output are still disabled.**
+### Phase 5 — Universe Engine
+Implemented on `feature/phase5-universe-engine`:
+
+- persistent universe definitions in Electron userData
+- exactly 512 channels per universe
+- Net range 0–127
+- Sub-Net range 0–15
+- Universe range 0–15
+- calculated 15-bit Art-Net Port-Address
+- duplicate Port-Address prevention
+- create / edit / delete / duplicate universes
+- universe enable / disable flag
+- broadcast or unicast destination mode
+- discovered ESP32 / Art-Net node assignment for unicast
+- persisted target IP
+- 512-channel zero/reset buffer
+- native channel value validation 0–255
+- channel buffer preview
+- universe readiness / target-offline indicators
+- duplicate universes are created disabled for safety
+
+**ArtDmx serialization and physical output are not implemented in Phase 5.**
 
 ## Requirements
 
@@ -65,20 +67,30 @@ npm run build
 npm run preview
 ```
 
-## Current workflow
+## Phase 5 workflow
 
-1. Open **Network**.
-2. Select the NIC connected to the ESP32 / Art-Net network.
-3. Click **Start discovery**.
-4. Open **Nodes**.
-5. Select the ESP32 to inspect health, capabilities, port mapping and history.
+1. Open **Network** and start Art-Net discovery.
+2. Confirm the ESP32 appears under **Nodes**.
+3. Open **Universes**.
+4. Create a universe.
+5. Set Net / Sub-Net / Universe.
+6. Choose **Unicast** to assign the ESP32, or **Broadcast** for subnet broadcast mode.
+7. Enable the universe configuration.
+8. The universe remains marked **ArtDmx locked** until the realtime output phase.
 
-## Health states
+## Art-Net addressing
 
-- Healthy: reply within 5.5 seconds
-- Stale: reply older than 5.5 seconds and up to 11 seconds
-- Offline: no reply for more than 11 seconds
-- Retained for up to 60 seconds before removal
+A Port-Address is a 15-bit value composed of:
+
+- Net: 0–127
+- Sub-Net: 0–15
+- Universe: 0–15
+
+Each logical universe contains 512 DMX channel values.
+
+## Persistence
+
+Universe configuration and channel buffers are stored in Electron's userData directory as `universes.json`.
 
 ## Acceptance checklists
 
@@ -86,17 +98,19 @@ npm run preview
 - `PHASE2-CHECKLIST.md`
 - `PHASE3-CHECKLIST.md`
 - `PHASE4-CHECKLIST.md`
+- `PHASE5-CHECKLIST.md`
 
 ## Safety
 
-The application currently sends Art-Net discovery traffic only. It does not send ArtDmx or fixture/channel levels.
+Phase 5 still sends discovery traffic only. It does not send ArtDmx or fixture/channel levels to the ESP32.
 
 ## Next phase
 
-Phase 5 — Universe Engine:
-- create and manage universes
-- 512-channel buffers
-- Port-Address assignment
-- node destination mapping
-- broadcast/unicast mode
-- universe enable/disable and status
+Phase 6 — Realtime DMX Output Engine:
+- ArtDmx serialization
+- dedicated output loop
+- configurable output frame rate
+- explicit Output Enable
+- repeated Blackout frames
+- broadcast / unicast transmission
+- output watchdog and graceful shutdown
