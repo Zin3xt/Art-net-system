@@ -6,42 +6,45 @@ Electron desktop lighting-control system being developed in phases.
 
 ### Phase 1 — Electron Foundation
 Implemented:
-
 - Electron + React + TypeScript + Vite
-- Tailwind CSS console-style UI
-- secure preload/contextBridge API
-- context isolation and renderer sandbox
-- local settings persistence
-- local application logging
+- Tailwind console UI
+- secure preload/contextBridge
+- local settings and logging
 
 ### Phase 2 — Network Interface Management
 Implemented:
-
-- native IPv4 network-adapter discovery
-- Ethernet / Wi-Fi / virtual / loopback classification where identifiable
-- IPv4, CIDR, subnet mask and broadcast information
-- preferred Art-Net NIC selection and persistence
-- adapter refresh / reconnect visibility
-- loopback protection
+- IPv4 adapter discovery
+- Art-Net NIC selection
+- IP / CIDR / subnet / broadcast information
+- interface persistence and reconnect visibility
 
 ### Phase 3 — Art-Net Core Discovery Engine
-Implemented on `feature/phase3-artnet-core-engine`:
+Implemented:
+- UDP 6454 lifecycle
+- ArtPoll and ArtPollReply
+- automatic and manual discovery
+- node identity / capability / port parsing
+- packet counters
+- safe Start / Stop
 
-- UDP 6454 lifecycle bound to the selected local NIC
-- ArtPoll packet creation
-- ArtPoll broadcast every 2.75 seconds
-- manual ArtPoll / Scan Now
-- ArtPollReply validation and parsing
-- discovered-node list
-- node names, IP, MAC, style, firmware and OEM information
-- Art-Net input/output Port-Address parsing
+### Phase 4 — Art-Net Node Monitoring
+Implemented on `feature/phase4-node-monitoring`:
+- dedicated Nodes workspace
+- Healthy / Stale / Offline states
+- ESP32-friendly health timing
+- first / last seen and last changed timestamps
+- response count per node
+- node search and health filters
+- detailed node information
+- Art-Net port / universe mapping
 - RDM / sACN capability indicators
-- online/offline node tracking
-- packet TX/RX counters
-- Start / Stop discovery controls
-- safe port-binding and runtime error reporting
+- node configuration-change detection
+- discovery / stale / offline / recovery / change events
+- engine and socket event history
+- per-device history
+- session monitoring history capped at 250 events
 
-**Phase 3 is discovery only. It does not transmit ArtDmx or physical DMX values.**
+**ArtDmx and physical DMX output are still disabled.**
 
 ## Requirements
 
@@ -62,32 +65,38 @@ npm run build
 npm run preview
 ```
 
+## Current workflow
+
+1. Open **Network**.
+2. Select the NIC connected to the ESP32 / Art-Net network.
+3. Click **Start discovery**.
+4. Open **Nodes**.
+5. Select the ESP32 to inspect health, capabilities, port mapping and history.
+
+## Health states
+
+- Healthy: reply within 5.5 seconds
+- Stale: reply older than 5.5 seconds and up to 11 seconds
+- Offline: no reply for more than 11 seconds
+- Retained for up to 60 seconds before removal
+
 ## Acceptance checklists
 
 - `PHASE1-CHECKLIST.md`
 - `PHASE2-CHECKLIST.md`
 - `PHASE3-CHECKLIST.md`
-
-## Phase 3 workflow
-
-1. Open **Network**.
-2. Select the Ethernet or Wi-Fi adapter connected to the Art-Net network.
-3. Click **Start discovery**.
-4. The application binds UDP port 6454 to that adapter.
-5. ArtPoll is broadcast every 2.75 seconds.
-6. ArtPollReply packets populate the discovered-node list.
-7. Click **Stop** before changing the selected NIC.
+- `PHASE4-CHECKLIST.md`
 
 ## Safety
 
-ArtDmx is deliberately not implemented yet. Phase 3 sends only discovery traffic.
+The application currently sends Art-Net discovery traffic only. It does not send ArtDmx or fixture/channel levels.
 
 ## Next phase
 
-Phase 4 — Art-Net Node Discovery & Monitoring:
-
-- richer node-health state
-- device change detection
-- node-detail view
-- port/subscription visualization
-- diagnostics and event history
+Phase 5 — Universe Engine:
+- create and manage universes
+- 512-channel buffers
+- Port-Address assignment
+- node destination mapping
+- broadcast/unicast mode
+- universe enable/disable and status
