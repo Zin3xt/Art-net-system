@@ -123,6 +123,7 @@ export interface UniverseDefinition {
   enabled: boolean
   outputMode: UniverseOutputMode
   targetNodeId: string | null
+  targetNodeMac: string | null
   targetNodeIp: string | null
   channels: number[]
   createdAt: number
@@ -137,6 +138,7 @@ export interface UniverseInput {
   enabled: boolean
   outputMode: UniverseOutputMode
   targetNodeId: string | null
+  targetNodeMac: string | null
   targetNodeIp: string | null
 }
 
