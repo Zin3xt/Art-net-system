@@ -4,12 +4,12 @@ import { Sidebar } from './components/Sidebar'
 import { StatusBar } from './components/StatusBar'
 import { TopBar } from './components/TopBar'
 import { DashboardPage } from './pages/DashboardPage'
+import { NetworkPage } from './pages/NetworkPage'
 import { PlaceholderPage } from './pages/PlaceholderPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { useAppStore } from './stores/appStore'
 
 const phases = {
-  network: 2,
   universes: 5,
   fixtures: 9,
   patch: 10,
@@ -39,6 +39,7 @@ export default function App() {
 
   const page = useMemo(() => {
     if (currentPage === 'dashboard') return <DashboardPage info={info} />
+    if (currentPage === 'network') return <NetworkPage />
     if (currentPage === 'settings') return <SettingsPage />
     const title = currentPage.charAt(0).toUpperCase() + currentPage.slice(1)
     return <PlaceholderPage title={title} phase={phases[currentPage as keyof typeof phases]} />
