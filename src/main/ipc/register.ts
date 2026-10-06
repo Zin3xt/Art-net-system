@@ -1,6 +1,7 @@
 import { app, ipcMain } from 'electron'
 import { IPC } from '../../shared/ipc'
 import type { AppSettings } from '../../shared/types'
+import { artNetEngine } from '../artnet/engine'
 import { logger } from '../services/logger'
 import { listNetworkAdapters } from '../services/network'
 import { readSettings, saveSettings } from '../services/settings'
@@ -44,6 +45,31 @@ export function registerIpcHandlers(): void {
   ipcMain.handle(IPC.NETWORK_LIST, (event) => {
     assertTrustedSender(event)
     return listNetworkAdapters()
+  })
+
+  ipcMain.handle(IPC.ARTNET_START, async (event) => {
+    assertTrustedSender(event)
+    return artNetEngine.start()
+  })
+
+  ipcMain.handle(IPC.ARTNET_STOP, async (event) => {
+    assertTrustedSender(event)
+    return artNetEngine.stop()
+  })
+
+  ipcMain.handle(IPC.ARTNET_POLL, async (event) => {
+    assertTrustedSender(event)
+    return artNetEngine.poll()
+  })
+
+  ipcMain.handle(IPC.ARTNET_STATUS, (event) => {
+    assertTrustedSender(event)
+    return artNetEngine.getStatus()
+  })
+
+  ipcMain.handle(IPC.ARTNET_NODES, (event) => {
+    assertTrustedSender(event)
+    return artNetEngine.getNodes()
   })
 
   ipcMain.handle(IPC.LOG_INFO, async (event, message: unknown) => {
