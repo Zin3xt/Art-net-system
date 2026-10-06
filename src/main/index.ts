@@ -1,5 +1,6 @@
 import { app, BrowserWindow } from 'electron'
 import { join } from 'node:path'
+import { artNetEngine } from './artnet/engine'
 import { registerIpcHandlers } from './ipc/register'
 import { logger } from './services/logger'
 import { readSettings } from './services/settings'
@@ -76,6 +77,10 @@ app.whenReady().then(async () => {
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) void createWindow()
   })
+})
+
+app.on('before-quit', () => {
+  void artNetEngine.stop()
 })
 
 app.on('window-all-closed', () => {
