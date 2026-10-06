@@ -3,6 +3,7 @@ import { create } from 'zustand'
 export type PageId =
   | 'dashboard'
   | 'network'
+  | 'nodes'
   | 'universes'
   | 'fixtures'
   | 'patch'
