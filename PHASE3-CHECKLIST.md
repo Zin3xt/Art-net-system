@@ -27,9 +27,11 @@
 
 ## Automated acceptance
 
-- [ ] `npm install` passes
-- [ ] `npm run typecheck` passes
-- [ ] `npm run build` passes
+- [x] `npm install` passes
+- [x] `npm run typecheck` passes
+- [x] `npm run build` passes
+
+Validated by GitHub Actions on the Phase 3 feature branch.
 
 ## Windows / hardware acceptance
 
