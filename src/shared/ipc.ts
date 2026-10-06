@@ -3,6 +3,7 @@ export const IPC = {
   APP_PING: 'app:ping',
   SETTINGS_GET: 'settings:get',
   SETTINGS_SAVE: 'settings:save',
+  NETWORK_LIST: 'network:list-adapters',
   LOG_INFO: 'log:info',
   LOG_WARN: 'log:warn',
   LOG_ERROR: 'log:error'
