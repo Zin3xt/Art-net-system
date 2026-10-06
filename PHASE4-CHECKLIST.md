@@ -43,9 +43,11 @@ These values are intentionally tolerant enough for ESP32/Wi-Fi development while
 
 ## Automated acceptance
 
-- [ ] npm install passes
-- [ ] npm run typecheck passes
-- [ ] npm run build passes
+- [x] npm install passes
+- [x] npm run typecheck passes
+- [x] npm run build passes
+
+Validated by GitHub Actions on the Phase 4 feature branch.
 
 ## ESP32 hardware acceptance
 
