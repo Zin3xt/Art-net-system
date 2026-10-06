@@ -11,6 +11,13 @@ export const IPC = {
   ARTNET_NODES: 'artnet:nodes',
   ARTNET_EVENTS: 'artnet:events',
   ARTNET_CLEAR_EVENTS: 'artnet:clear-events',
+  UNIVERSE_LIST: 'universe:list',
+  UNIVERSE_CREATE: 'universe:create',
+  UNIVERSE_UPDATE: 'universe:update',
+  UNIVERSE_DELETE: 'universe:delete',
+  UNIVERSE_DUPLICATE: 'universe:duplicate',
+  UNIVERSE_RESET: 'universe:reset',
+  UNIVERSE_SET_CHANNEL: 'universe:set-channel',
   LOG_INFO: 'log:info',
   LOG_WARN: 'log:warn',
   LOG_ERROR: 'log:error'
