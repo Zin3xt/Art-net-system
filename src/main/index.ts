@@ -24,7 +24,7 @@ async function createWindow(): Promise<void> {
     backgroundColor: '#09090b',
     autoHideMenuBar: true,
     webPreferences: {
-      preload: join(__dirname, '../preload/index.js'),
+      preload: join(__dirname, '../preload/index.cjs'),
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
@@ -34,8 +34,21 @@ async function createWindow(): Promise<void> {
   })
 
   mainWindow.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))
+
   mainWindow.webContents.on('will-navigate', (event, url) => {
     if (!isAllowedNavigation(url)) event.preventDefault()
+  })
+
+  mainWindow.webContents.on('preload-error', (_event, preloadPath, error) => {
+    void logger.error(`Preload failed: ${preloadPath} — ${error.message}`)
+  })
+
+  mainWindow.webContents.on('did-fail-load', (_event, errorCode, errorDescription, validatedURL) => {
+    void logger.error(`Renderer load failed (${errorCode}): ${errorDescription} — ${validatedURL}`)
+  })
+
+  mainWindow.webContents.on('render-process-gone', (_event, details) => {
+    void logger.error(`Renderer process exited: ${details.reason} (exit ${details.exitCode})`)
   })
 
   mainWindow.once('ready-to-show', () => {
