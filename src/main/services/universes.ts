@@ -61,6 +61,7 @@ function normalizeInput(input: UniverseInput): UniverseInput {
 
   const outputMode = normalizeOutputMode(input.outputMode)
   const targetNodeId = normalizeNullableString(input.targetNodeId)
+  const targetNodeMac = normalizeNullableString(input.targetNodeMac, 32)
   const targetNodeIp = normalizeNullableString(input.targetNodeIp, 64)
 
   if (outputMode === 'unicast' && (!targetNodeId || !targetNodeIp)) {
@@ -75,6 +76,7 @@ function normalizeInput(input: UniverseInput): UniverseInput {
     enabled: Boolean(input.enabled),
     outputMode,
     targetNodeId,
+    targetNodeMac,
     targetNodeIp
   }
 }
@@ -110,6 +112,7 @@ function sanitizeStoredUniverse(value: unknown): UniverseDefinition | null {
       enabled: Boolean(raw.enabled),
       outputMode: raw.outputMode ?? 'broadcast',
       targetNodeId: raw.targetNodeId ?? null,
+      targetNodeMac: raw.targetNodeMac ?? null,
       targetNodeIp: raw.targetNodeIp ?? null
     })
 
