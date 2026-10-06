@@ -30,6 +30,7 @@ const EMPTY_FORM: UniverseInput = {
   enabled: false,
   outputMode: 'broadcast',
   targetNodeId: null,
+  targetNodeMac: null,
   targetNodeIp: null
 }
 
@@ -171,6 +172,7 @@ export function UniversesPage({ nodes }: { nodes: ArtNetNode[] }) {
       ...current,
       outputMode: mode,
       targetNodeId: mode === 'broadcast' ? null : current.targetNodeId,
+      targetNodeMac: mode === 'broadcast' ? null : current.targetNodeMac,
       targetNodeIp: mode === 'broadcast' ? null : current.targetNodeIp
     }))
   }
@@ -180,6 +182,7 @@ export function UniversesPage({ nodes }: { nodes: ArtNetNode[] }) {
     setForm((current) => ({
       ...current,
       targetNodeId: node?.id ?? null,
+      targetNodeMac: node?.mac ?? null,
       targetNodeIp: node?.ip ?? null
     }))
   }
@@ -452,9 +455,14 @@ function UniverseCard({
   onReset: () => void
   onDelete: () => void
 }) {
-  const target = universe.targetNodeId
-    ? nodes.find((node) => node.id === universe.targetNodeId) ?? null
-    : null
+  const target =
+    (universe.targetNodeMac
+      ? nodes.find((node) => node.mac === universe.targetNodeMac)
+      : null) ??
+    (universe.targetNodeId
+      ? nodes.find((node) => node.id === universe.targetNodeId)
+      : null) ??
+    null
   const readiness = getReadiness(universe, target)
   const nonZero = universe.channels.filter((value) => value !== 0).length
   const maxValue = universe.channels.reduce((max, value) => Math.max(max, value), 0)
@@ -648,6 +656,7 @@ function toInput(universe: UniverseDefinition): UniverseInput {
     enabled: universe.enabled,
     outputMode: universe.outputMode,
     targetNodeId: universe.targetNodeId,
+    targetNodeMac: universe.targetNodeMac,
     targetNodeIp: universe.targetNodeIp
   }
 }
