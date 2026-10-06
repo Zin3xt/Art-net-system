@@ -13,22 +13,35 @@ Implemented:
 - context isolation and renderer sandbox
 - local settings persistence
 - local application logging
-- Dashboard and Settings workspaces
 
 ### Phase 2 — Network Interface Management
-Implemented on `feature/phase2-network-interface-management`:
+Implemented:
 
 - native IPv4 network-adapter discovery
 - Ethernet / Wi-Fi / virtual / loopback classification where identifiable
-- IPv4, CIDR and subnet-mask display
-- broadcast-address calculation
-- preferred Art-Net NIC selection
-- preference persistence
-- automatic adapter refresh every 2.5 seconds
-- adapter disconnect/reconnect visibility
+- IPv4, CIDR, subnet mask and broadcast information
+- preferred Art-Net NIC selection and persistence
+- adapter refresh / reconnect visibility
 - loopback protection
 
-Phase 2 does **not** open UDP port 6454 or send Art-Net packets.
+### Phase 3 — Art-Net Core Discovery Engine
+Implemented on `feature/phase3-artnet-core-engine`:
+
+- UDP 6454 lifecycle bound to the selected local NIC
+- ArtPoll packet creation
+- ArtPoll broadcast every 2.75 seconds
+- manual ArtPoll / Scan Now
+- ArtPollReply validation and parsing
+- discovered-node list
+- node names, IP, MAC, style, firmware and OEM information
+- Art-Net input/output Port-Address parsing
+- RDM / sACN capability indicators
+- online/offline node tracking
+- packet TX/RX counters
+- Start / Stop discovery controls
+- safe port-binding and runtime error reporting
+
+**Phase 3 is discovery only. It does not transmit ArtDmx or physical DMX values.**
 
 ## Requirements
 
@@ -49,19 +62,32 @@ npm run build
 npm run preview
 ```
 
-## Phase 2 acceptance
+## Acceptance checklists
 
-See `PHASE2-CHECKLIST.md`.
+- `PHASE1-CHECKLIST.md`
+- `PHASE2-CHECKLIST.md`
+- `PHASE3-CHECKLIST.md`
+
+## Phase 3 workflow
+
+1. Open **Network**.
+2. Select the Ethernet or Wi-Fi adapter connected to the Art-Net network.
+3. Click **Start discovery**.
+4. The application binds UDP port 6454 to that adapter.
+5. ArtPoll is broadcast every 2.75 seconds.
+6. ArtPollReply packets populate the discovered-node list.
+7. Click **Stop** before changing the selected NIC.
+
+## Safety
+
+ArtDmx is deliberately not implemented yet. Phase 3 sends only discovery traffic.
 
 ## Next phase
 
-Phase 3 — Art-Net Core Engine:
+Phase 4 — Art-Net Node Discovery & Monitoring:
 
-- resolve the preferred local IPv4 interface
-- safe UDP socket lifecycle
-- UDP port 6454
-- ArtPoll packet encoding
-- ArtPollReply parsing
-- broadcast discovery
-- unicast/broadcast foundation
-- packet validation and logging
+- richer node-health state
+- device change detection
+- node-detail view
+- port/subscription visualization
+- diagnostics and event history
