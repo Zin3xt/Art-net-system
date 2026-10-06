@@ -2,6 +2,7 @@ import { app, ipcMain } from 'electron'
 import { IPC } from '../../shared/ipc'
 import type { AppSettings } from '../../shared/types'
 import { logger } from '../services/logger'
+import { listNetworkAdapters } from '../services/network'
 import { readSettings, saveSettings } from '../services/settings'
 import { assertTrustedSender } from './trust'
 
@@ -38,6 +39,11 @@ export function registerIpcHandlers(): void {
     const saved = await saveSettings(settings)
     await logger.info('Application settings updated.')
     return saved
+  })
+
+  ipcMain.handle(IPC.NETWORK_LIST, (event) => {
+    assertTrustedSender(event)
+    return listNetworkAdapters()
   })
 
   ipcMain.handle(IPC.LOG_INFO, async (event, message: unknown) => {
