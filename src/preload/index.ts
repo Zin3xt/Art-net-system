@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { IPC } from '../shared/ipc'
-import type { AppSettings, DesktopBridge } from '../shared/types'
+import type { AppSettings, DesktopBridge, UniverseChannelUpdate, UniverseInput } from '../shared/types'
 
 const bridge: DesktopBridge = {
   app: {
@@ -22,6 +22,15 @@ const bridge: DesktopBridge = {
     getNodes: () => ipcRenderer.invoke(IPC.ARTNET_NODES),
     getEvents: () => ipcRenderer.invoke(IPC.ARTNET_EVENTS),
     clearEvents: () => ipcRenderer.invoke(IPC.ARTNET_CLEAR_EVENTS)
+  },
+  universes: {
+    list: () => ipcRenderer.invoke(IPC.UNIVERSE_LIST),
+    create: (input: UniverseInput) => ipcRenderer.invoke(IPC.UNIVERSE_CREATE, input),
+    update: (id: string, input: UniverseInput) => ipcRenderer.invoke(IPC.UNIVERSE_UPDATE, id, input),
+    delete: (id: string) => ipcRenderer.invoke(IPC.UNIVERSE_DELETE, id),
+    duplicate: (id: string) => ipcRenderer.invoke(IPC.UNIVERSE_DUPLICATE, id),
+    reset: (id: string) => ipcRenderer.invoke(IPC.UNIVERSE_RESET, id),
+    setChannel: (update: UniverseChannelUpdate) => ipcRenderer.invoke(IPC.UNIVERSE_SET_CHANNEL, update)
   },
   log: {
     info: (message: string) => ipcRenderer.invoke(IPC.LOG_INFO, message),
