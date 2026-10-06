@@ -108,7 +108,11 @@ export function parseArtPollReply(buffer: Buffer, remoteAddress: string, now = D
     ports,
     rdmCapable: (status1 & 0x02) !== 0,
     sacnCapable: (status2 & 0x10) !== 0,
+    firstSeenAt: now,
     lastSeenAt: now,
+    lastChangedAt: now,
+    responseCount: 1,
+    health: 'healthy',
     online: true
   }
 }
