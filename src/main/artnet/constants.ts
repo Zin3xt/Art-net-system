@@ -7,5 +7,7 @@ export const OP_POLL_REPLY = 0x2100
 
 export const ART_POLL_INTERVAL_MS = 2750
 export const ART_POLL_REPLY_WINDOW_MS = 3000
+export const ART_NODE_STALE_MS = 4000
 export const ART_NODE_OFFLINE_MS = 6500
 export const ART_NODE_RETENTION_MS = 60000
+export const ART_NODE_EVENT_LIMIT = 250
