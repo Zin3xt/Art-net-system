@@ -2,6 +2,18 @@ export type ThemeMode = 'dark' | 'system'
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error'
 export type NetworkAdapterType = 'ethernet' | 'wifi' | 'virtual' | 'loopback' | 'other'
 export type ArtNetEngineState = 'stopped' | 'starting' | 'running' | 'error'
+export type ArtNetNodeHealth = 'healthy' | 'stale' | 'offline'
+export type ArtNetNodeEventSeverity = 'info' | 'warning' | 'error'
+export type ArtNetNodeEventType =
+  | 'engine-started'
+  | 'engine-stopped'
+  | 'node-discovered'
+  | 'node-recovered'
+  | 'node-stale'
+  | 'node-offline'
+  | 'node-changed'
+  | 'node-removed'
+  | 'socket-error'
 
 export interface AppSettings {
   theme: ThemeMode
@@ -63,8 +75,23 @@ export interface ArtNetNode {
   ports: ArtNetPort[]
   rdmCapable: boolean
   sacnCapable: boolean
+  firstSeenAt: number
   lastSeenAt: number
+  lastChangedAt: number
+  responseCount: number
+  health: ArtNetNodeHealth
   online: boolean
+}
+
+export interface ArtNetNodeEvent {
+  id: string
+  timestamp: number
+  type: ArtNetNodeEventType
+  severity: ArtNetNodeEventSeverity
+  nodeId: string | null
+  nodeName: string | null
+  message: string
+  details: string | null
 }
 
 export interface ArtNetEngineStatus {
@@ -77,6 +104,9 @@ export interface ArtNetEngineStatus {
   lastPollAt: number | null
   packetsSent: number
   packetsReceived: number
+  healthyNodes: number
+  staleNodes: number
+  offlineNodes: number
   onlineNodes: number
   totalNodes: number
   lastError: string | null
@@ -100,6 +130,8 @@ export interface DesktopBridge {
     poll: () => Promise<ArtNetEngineStatus>
     getStatus: () => Promise<ArtNetEngineStatus>
     getNodes: () => Promise<ArtNetNode[]>
+    getEvents: () => Promise<ArtNetNodeEvent[]>
+    clearEvents: () => Promise<void>
   }
   log: {
     info: (message: string) => Promise<void>
