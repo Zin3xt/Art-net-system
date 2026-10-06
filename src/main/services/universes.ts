@@ -64,7 +64,7 @@ function normalizeInput(input: UniverseInput): UniverseInput {
   const targetNodeMac = normalizeNullableString(input.targetNodeMac, 32)
   const targetNodeIp = normalizeNullableString(input.targetNodeIp, 64)
 
-  if (outputMode === 'unicast' && (!targetNodeId || !targetNodeIp)) {
+  if (outputMode === 'unicast' && (!(targetNodeId || targetNodeMac) || !targetNodeIp)) {
     throw new Error('Unicast mode requires an assigned Art-Net node.')
   }
 
