@@ -9,6 +9,7 @@ const fallback: AppSettings = {
   startMaximized: false,
   restoreLastShow: true,
   outputEnabledOnStartup: false,
+  preferredNetworkInterface: null,
   logLevel: 'info'
 }
 
@@ -32,7 +33,7 @@ export function SettingsPage() {
     <div className="space-y-4 p-5">
       <div>
         <h2 className="text-xl font-semibold">Application Settings</h2>
-        <p className="mt-1 text-sm text-zinc-500">Phase 1 local settings are stored on this computer.</p>
+        <p className="mt-1 text-sm text-zinc-500">Local settings are stored on this computer.</p>
       </div>
 
       <Card>
@@ -41,6 +42,18 @@ export function SettingsPage() {
           <ToggleRow label="Compact console mode" description="Use tighter spacing for operator-focused screens." checked={settings.compactMode} onChange={(v) => setSettings({ ...settings, compactMode: v })} />
           <ToggleRow label="Start maximized" description="Open the main console using the available desktop workspace." checked={settings.startMaximized} onChange={(v) => setSettings({ ...settings, startMaximized: v })} />
           <ToggleRow label="Restore last show" description="Reserved for the show-file phase; preference is stored now." checked={settings.restoreLastShow} onChange={(v) => setSettings({ ...settings, restoreLastShow: v })} />
+        </div>
+      </Card>
+
+      <Card>
+        <CardHeader title="Networking" subtitle="Art-Net interface preference" />
+        <div className="p-4">
+          <div className="text-sm text-zinc-200">Preferred interface</div>
+          <div className="mt-1 text-xs text-zinc-500">
+            {settings.preferredNetworkInterface
+              ? `Selected from Network: ${settings.preferredNetworkInterface}`
+              : 'No Art-Net interface selected. Choose one from the Network workspace.'}
+          </div>
         </div>
       </Card>
 
