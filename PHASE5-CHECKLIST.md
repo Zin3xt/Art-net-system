@@ -19,7 +19,7 @@
 - [x] Broadcast destination mode
 - [x] Unicast destination mode
 - [x] Assign discovered Art-Net / ESP32 node
-- [x] Persist target node ID and IP
+- [x] Persist target node ID, MAC and last-known IP
 - [x] Reset all 512 channels to zero
 - [x] Native channel validation: channel 1–512
 - [x] Native DMX value validation: 0–255
@@ -31,9 +31,11 @@
 
 ## Automated acceptance
 
-- [ ] npm install passes
-- [ ] npm run typecheck passes
-- [ ] npm run build passes
+- [x] npm install passes
+- [x] npm run typecheck passes
+- [x] npm run build passes
+
+Validated by GitHub Actions on the final Phase 5 branch head.
 
 ## Windows / ESP32 acceptance
 
@@ -49,6 +51,7 @@
 - [ ] Select Unicast
 - [ ] Assign the discovered ESP32
 - [ ] ESP32 IP is displayed as destination
+- [ ] Change the ESP32 DHCP IP and confirm the universe resolves the same node by MAC
 - [ ] Power off ESP32 and confirm target-offline state
 - [ ] Return ESP32 and confirm target status recovers
 - [ ] Broadcast mode does not require a target node
