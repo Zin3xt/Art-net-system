@@ -18,7 +18,9 @@ export function StatusBar({
         </span>
         <span>DMX OUTPUT DISABLED</span>
         <span>UDP {artnetStatus.state === 'running' ? '6454 LIVE' : 'OFF'}</span>
-        <span>NODES {artnetStatus.onlineNodes}/{artnetStatus.totalNodes}</span>
+        <span>H {artnetStatus.healthyNodes}</span>
+        <span>S {artnetStatus.staleNodes}</span>
+        <span>O {artnetStatus.offlineNodes}</span>
         <span>TX {artnetStatus.packetsSent}</span>
         <span>RX {artnetStatus.packetsReceived}</span>
       </div>

@@ -1,34 +1,34 @@
-import { CheckCircle2, CircleDashed, LockKeyhole, Network, RadioTower, ServerCog } from 'lucide-react'
+import { CheckCircle2, CircleDashed, Cpu, LockKeyhole, Network, RadioTower, ServerCog } from 'lucide-react'
 import type { AppInfo } from '../../../shared/types'
 import { Card, CardHeader } from '../components/ui/Card'
 
 const checks = [
-  ['UDP lifecycle', 'Discovery binds UDP 6454 only after an Art-Net NIC is selected.'],
-  ['ArtPoll encoder', 'Protocol version 14 discovery packets are broadcast automatically.'],
-  ['ArtPollReply parser', 'Node identity, capabilities and Port-Addresses are decoded safely.'],
-  ['Discovery safety', 'ArtDmx and physical DMX output remain unavailable in Phase 3.']
+  ['Node health monitoring', 'Healthy, stale and offline states are derived from ArtPollReply timing.'],
+  ['ESP32 monitoring', 'Response count, first/last seen and recovery state are tracked per device.'],
+  ['Change detection', 'Name, firmware, capabilities, reports and port mappings are monitored for changes.'],
+  ['Event history', 'Discovery, recovery, offline, changes and engine events are retained for the session.']
 ]
 
 export function DashboardPage({ info }: { info: AppInfo | null }) {
   return (
     <div className="space-y-4 p-5">
       <div>
-        <h2 className="text-xl font-semibold">Art-Net Core Engine</h2>
+        <h2 className="text-xl font-semibold">Art-Net Node Monitoring</h2>
         <p className="mt-1 text-sm text-zinc-500">
-          Phase 3 introduces live Art-Net discovery while keeping all lighting-output packets disabled.
+          Phase 4 adds live Art-Net device health and history while keeping physical DMX output disabled.
         </p>
       </div>
 
       <div className="grid grid-cols-4 gap-3">
         <Metric icon={ServerCog} label="Application" value="Desktop Ready" detail={info ? `v${info.version}` : 'Starting…'} />
         <Metric icon={LockKeyhole} label="Security" value="Isolated" detail="Restricted IPC bridge" />
-        <Metric icon={Network} label="Networking" value="NIC Ready" detail="Phase 2 complete" />
-        <Metric icon={RadioTower} label="Art-Net" value="Discovery" detail="UDP 6454 · Phase 3" />
+        <Metric icon={Network} label="Discovery" value="UDP 6454" detail="ArtPoll / ArtPollReply" />
+        <Metric icon={Cpu} label="Monitoring" value="Phase 4" detail="ESP32 / Art-Net nodes" />
       </div>
 
       <div className="grid grid-cols-[1.4fr_1fr] gap-4">
         <Card>
-          <CardHeader title="Phase 3 capabilities" subtitle="Discovery engine and packet parsing" />
+          <CardHeader title="Phase 4 capabilities" subtitle="Device health, details and monitoring history" />
           <div className="divide-y divide-zinc-900">
             {checks.map(([title, description]) => (
               <div key={title} className="flex items-start gap-3 px-4 py-3">
@@ -43,13 +43,13 @@ export function DashboardPage({ info }: { info: AppInfo | null }) {
         </Card>
 
         <Card>
-          <CardHeader title="Next milestone" subtitle="Phase 4 — Node Discovery & Monitoring" />
+          <CardHeader title="Next milestone" subtitle="Phase 5 — Universe Engine" />
           <div className="space-y-3 p-4 text-sm text-zinc-400">
             {[
-              'Richer node health and change detection',
-              'Node detail / capability view',
-              'Port and subscription visualization',
-              'Discovery diagnostics and event history'
+              'Create and manage Art-Net universes',
+              'Maintain 512-channel universe buffers',
+              'Assign Port-Addresses and node destinations',
+              'Add explicit universe enable / disable state'
             ].map((item) => (
               <div key={item} className="flex gap-2">
                 <CircleDashed size={15} className="mt-0.5 shrink-0 text-blue-400" />
@@ -63,11 +63,11 @@ export function DashboardPage({ info }: { info: AppInfo | null }) {
       <Card>
         <CardHeader
           title="Output safety"
-          subtitle="Phase 3 opens UDP 6454 only for ArtPoll discovery and incoming ArtPollReply traffic."
+          subtitle="Phase 4 monitors Art-Net devices only. Fixture/channel data is not transmitted."
         />
         <div className="grid grid-cols-3 gap-3 p-4">
           <SafetyItem title="ArtPoll" value="Enabled on demand" />
-          <SafetyItem title="ArtPollReply" value="Receive / parse" />
+          <SafetyItem title="Node monitoring" value="Enabled" />
           <SafetyItem title="ArtDmx" value="Disabled" />
         </div>
       </Card>
@@ -75,7 +75,7 @@ export function DashboardPage({ info }: { info: AppInfo | null }) {
   )
 }
 
-function Metric({ icon: Icon, label, value, detail }: { icon: typeof ServerCog; label: string; value: string; detail: string }) {
+function Metric({ icon: Icon, label, value, detail }: { icon: typeof RadioTower; label: string; value: string; detail: string }) {
   return (
     <Card className="p-4">
       <div className="flex items-start justify-between">

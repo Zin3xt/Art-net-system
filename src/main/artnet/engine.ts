@@ -1,9 +1,19 @@
 import { createSocket, type RemoteInfo, type Socket } from 'node:dgram'
-import type { ArtNetEngineStatus, ArtNetNode, NetworkAdapter } from '../../shared/types'
+import type {
+  ArtNetEngineStatus,
+  ArtNetNode,
+  ArtNetNodeEvent,
+  ArtNetNodeEventSeverity,
+  ArtNetNodeEventType,
+  ArtNetNodeHealth,
+  NetworkAdapter
+} from '../../shared/types'
 import {
   ARTNET_PORT,
+  ART_NODE_EVENT_LIMIT,
   ART_NODE_OFFLINE_MS,
   ART_NODE_RETENTION_MS,
+  ART_NODE_STALE_MS,
   ART_POLL_INTERVAL_MS
 } from './constants'
 import { createArtPollPacket } from './packets'
@@ -14,12 +24,33 @@ import { readSettings } from '../services/settings'
 
 type EngineState = ArtNetEngineStatus['state']
 
+function monitoringSignature(node: ArtNetNode): string {
+  return JSON.stringify({
+    ip: node.ip,
+    shortName: node.shortName,
+    longName: node.longName,
+    nodeReport: node.nodeReport,
+    firmwareVersion: node.firmwareVersion,
+    oemCode: node.oemCode,
+    style: node.style,
+    mac: node.mac,
+    bindIp: node.bindIp,
+    bindIndex: node.bindIndex,
+    numPorts: node.numPorts,
+    ports: node.ports,
+    rdmCapable: node.rdmCapable,
+    sacnCapable: node.sacnCapable
+  })
+}
+
 class ArtNetEngine {
   private socket: Socket | null = null
   private pollTimer: NodeJS.Timeout | null = null
   private state: EngineState = 'stopped'
   private selectedAdapter: NetworkAdapter | null = null
   private nodes = new Map<string, ArtNetNode>()
+  private events: ArtNetNodeEvent[] = []
+  private eventSequence = 0
   private startedAt: number | null = null
   private lastPollAt: number | null = null
   private lastError: string | null = null
@@ -28,6 +59,10 @@ class ArtNetEngine {
 
   getStatus(): ArtNetEngineStatus {
     const nodes = this.getNodes()
+    const healthyNodes = nodes.filter((node) => node.health === 'healthy').length
+    const staleNodes = nodes.filter((node) => node.health === 'stale').length
+    const offlineNodes = nodes.filter((node) => node.health === 'offline').length
+
     return {
       state: this.state,
       interfaceName: this.selectedAdapter?.name ?? null,
@@ -38,7 +73,10 @@ class ArtNetEngine {
       lastPollAt: this.lastPollAt,
       packetsSent: this.packetsSent,
       packetsReceived: this.packetsReceived,
-      onlineNodes: nodes.filter((node) => node.online).length,
+      healthyNodes,
+      staleNodes,
+      offlineNodes,
+      onlineNodes: healthyNodes + staleNodes,
       totalNodes: nodes.length,
       lastError: this.lastError
     }
@@ -49,18 +87,68 @@ class ArtNetEngine {
 
     for (const [id, node] of this.nodes.entries()) {
       const age = now - node.lastSeenAt
+
       if (age > ART_NODE_RETENTION_MS) {
+        this.addEvent(
+          'node-removed',
+          'info',
+          node,
+          `${node.longName} removed from the monitor after retention expired.`
+        )
         this.nodes.delete(id)
         continue
       }
 
-      node.online = age <= ART_NODE_OFFLINE_MS
+      if (this.state !== 'running' || (this.startedAt !== null && node.lastSeenAt < this.startedAt)) {
+        node.health = 'offline'
+        node.online = false
+        continue
+      }
+
+      const nextHealth = this.healthForAge(age)
+      if (nextHealth !== node.health) {
+        const previousHealth = node.health
+        node.health = nextHealth
+        node.online = nextHealth !== 'offline'
+
+        if (nextHealth === 'stale') {
+          this.addEvent(
+            'node-stale',
+            'warning',
+            node,
+            `${node.longName} is stale; no recent ArtPollReply has been received.`,
+            `Previous health: ${previousHealth}`
+          )
+        } else if (nextHealth === 'offline') {
+          this.addEvent(
+            'node-offline',
+            'warning',
+            node,
+            `${node.longName} is offline.`,
+            `Last reply was ${age} ms ago.`
+          )
+        }
+      }
     }
 
     return Array.from(this.nodes.values()).sort((a, b) => {
-      if (a.online !== b.online) return a.online ? -1 : 1
+      const healthOrder: Record<ArtNetNodeHealth, number> = {
+        healthy: 0,
+        stale: 1,
+        offline: 2
+      }
+      const byHealth = healthOrder[a.health] - healthOrder[b.health]
+      if (byHealth !== 0) return byHealth
       return a.ip.localeCompare(b.ip, undefined, { numeric: true })
     })
+  }
+
+  getEvents(): ArtNetNodeEvent[] {
+    return [...this.events]
+  }
+
+  clearEvents(): void {
+    this.events = []
   }
 
   async start(): Promise<ArtNetEngineStatus> {
@@ -95,6 +183,12 @@ class ArtNetEngine {
       socket.on('message', (message, remote) => this.handleMessage(message, remote))
       socket.on('error', (error) => {
         this.lastError = error.message
+        this.addEvent(
+          'socket-error',
+          'error',
+          null,
+          `Art-Net UDP socket error: ${error.message}`
+        )
         void logger.error(`Art-Net UDP error: ${error.message}`)
       })
 
@@ -105,6 +199,14 @@ class ArtNetEngine {
       this.startedAt = Date.now()
       this.packetsSent = 0
       this.packetsReceived = 0
+
+      this.addEvent(
+        'engine-started',
+        'info',
+        null,
+        `Art-Net discovery started on ${adapter.name}.`,
+        `${adapter.address} → ${adapter.broadcast} UDP ${ARTNET_PORT}`
+      )
 
       await logger.info(
         `Art-Net discovery started on ${adapter.name} (${adapter.address}) UDP ${ARTNET_PORT}, broadcast ${adapter.broadcast}.`
@@ -125,12 +227,15 @@ class ArtNetEngine {
       this.lastError = message
       this.state = 'error'
       await this.closeSocket()
+      this.addEvent('socket-error', 'error', null, `Unable to start Art-Net discovery: ${message}`)
       await logger.error(`Unable to start Art-Net discovery: ${message}`)
       throw error
     }
   }
 
   async stop(): Promise<ArtNetEngineStatus> {
+    const wasActive = this.state !== 'stopped' || this.socket !== null
+
     if (this.pollTimer) {
       clearInterval(this.pollTimer)
       this.pollTimer = null
@@ -143,10 +248,15 @@ class ArtNetEngine {
     this.selectedAdapter = null
 
     for (const node of this.nodes.values()) {
+      node.health = 'offline'
       node.online = false
     }
 
-    await logger.info('Art-Net discovery stopped.')
+    if (wasActive) {
+      this.addEvent('engine-stopped', 'info', null, 'Art-Net discovery stopped.')
+      await logger.info('Art-Net discovery stopped.')
+    }
+
     return this.getStatus()
   }
 
@@ -192,12 +302,84 @@ class ArtNetEngine {
     if (!node) return
 
     const previous = this.nodes.get(node.id)
-    this.nodes.set(node.id, {
+    if (!previous) {
+      this.nodes.set(node.id, node)
+      this.addEvent(
+        'node-discovered',
+        'info',
+        node,
+        `Discovered ${node.longName} at ${node.ip}.`,
+        node.mac ? `MAC ${node.mac}` : null
+      )
+      return
+    }
+
+    const changed = monitoringSignature(previous) !== monitoringSignature(node)
+    const previousHealth = previous.health
+    const now = node.lastSeenAt
+    const nextNode: ArtNetNode = {
       ...previous,
       ...node,
-      lastSeenAt: node.lastSeenAt,
+      firstSeenAt: previous.firstSeenAt,
+      lastSeenAt: now,
+      lastChangedAt: changed ? now : previous.lastChangedAt,
+      responseCount: previous.responseCount + 1,
+      health: 'healthy',
       online: true
-    })
+    }
+
+    this.nodes.set(node.id, nextNode)
+
+    if (previousHealth === 'stale' || previousHealth === 'offline') {
+      this.addEvent(
+        'node-recovered',
+        'info',
+        nextNode,
+        `${nextNode.longName} recovered and is responding again.`,
+        `Previous health: ${previousHealth}`
+      )
+    }
+
+    if (changed) {
+      this.addEvent(
+        'node-changed',
+        'info',
+        nextNode,
+        `${nextNode.longName} changed its ArtPollReply configuration.`,
+        'Name, firmware, capability, binding, report, or port mapping changed.'
+      )
+    }
+  }
+
+  private healthForAge(age: number): ArtNetNodeHealth {
+    if (age <= ART_NODE_STALE_MS) return 'healthy'
+    if (age <= ART_NODE_OFFLINE_MS) return 'stale'
+    return 'offline'
+  }
+
+  private addEvent(
+    type: ArtNetNodeEventType,
+    severity: ArtNetNodeEventSeverity,
+    node: ArtNetNode | null,
+    message: string,
+    details: string | null = null
+  ): void {
+    const timestamp = Date.now()
+    const event: ArtNetNodeEvent = {
+      id: `${timestamp}-${++this.eventSequence}`,
+      timestamp,
+      type,
+      severity,
+      nodeId: node?.id ?? null,
+      nodeName: node?.longName ?? null,
+      message,
+      details
+    }
+
+    this.events.unshift(event)
+    if (this.events.length > ART_NODE_EVENT_LIMIT) {
+      this.events.length = ART_NODE_EVENT_LIMIT
+    }
   }
 
   private async closeSocket(): Promise<void> {

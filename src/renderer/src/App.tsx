@@ -1,10 +1,16 @@
 import { useCallback, useEffect, useState } from 'react'
-import type { AppInfo, ArtNetEngineStatus, ArtNetNode } from '../../shared/types'
+import type {
+  AppInfo,
+  ArtNetEngineStatus,
+  ArtNetNode,
+  ArtNetNodeEvent
+} from '../../shared/types'
 import { Sidebar } from './components/Sidebar'
 import { StatusBar } from './components/StatusBar'
 import { TopBar } from './components/TopBar'
 import { DashboardPage } from './pages/DashboardPage'
 import { NetworkPage } from './pages/NetworkPage'
+import { NodesPage } from './pages/NodesPage'
 import { PlaceholderPage } from './pages/PlaceholderPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { useAppStore } from './stores/appStore'
@@ -19,6 +25,9 @@ const EMPTY_ARTNET_STATUS: ArtNetEngineStatus = {
   lastPollAt: null,
   packetsSent: 0,
   packetsReceived: 0,
+  healthyNodes: 0,
+  staleNodes: 0,
+  offlineNodes: 0,
   onlineNodes: 0,
   totalNodes: 0,
   lastError: null
@@ -43,6 +52,7 @@ export default function App() {
   const [ipcOk, setIpcOk] = useState(false)
   const [artnetStatus, setArtnetStatus] = useState<ArtNetEngineStatus>(EMPTY_ARTNET_STATUS)
   const [artnetNodes, setArtnetNodes] = useState<ArtNetNode[]>([])
+  const [artnetEvents, setArtnetEvents] = useState<ArtNetNodeEvent[]>([])
   const bridgeAvailable = typeof window.artnetDesktop !== 'undefined'
 
   useEffect(() => {
@@ -64,15 +74,23 @@ export default function App() {
     if (!bridgeAvailable) return
 
     try {
-      const [status, nodes] = await Promise.all([
+      const [status, nodes, events] = await Promise.all([
         window.artnetDesktop.artnet.getStatus(),
-        window.artnetDesktop.artnet.getNodes()
+        window.artnetDesktop.artnet.getNodes(),
+        window.artnetDesktop.artnet.getEvents()
       ])
       setArtnetStatus(status)
       setArtnetNodes(nodes)
+      setArtnetEvents(events)
     } catch {
       // The bridge error page handles preload failures. Runtime errors are reported by the engine status.
     }
+  }, [bridgeAvailable])
+
+  const clearArtNetEvents = useCallback(async () => {
+    if (!bridgeAvailable) return
+    await window.artnetDesktop.artnet.clearEvents()
+    setArtnetEvents([])
   }, [bridgeAvailable])
 
   useEffect(() => {
@@ -91,6 +109,17 @@ export default function App() {
           artnetStatus={artnetStatus}
           artnetNodes={artnetNodes}
           onArtNetChanged={refreshArtNet}
+        />
+      )
+    }
+    if (currentPage === 'nodes') {
+      return (
+        <NodesPage
+          artnetStatus={artnetStatus}
+          nodes={artnetNodes}
+          events={artnetEvents}
+          onRefresh={refreshArtNet}
+          onClearEvents={clearArtNetEvents}
         />
       )
     }

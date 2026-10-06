@@ -19,7 +19,9 @@ const bridge: DesktopBridge = {
     stop: () => ipcRenderer.invoke(IPC.ARTNET_STOP),
     poll: () => ipcRenderer.invoke(IPC.ARTNET_POLL),
     getStatus: () => ipcRenderer.invoke(IPC.ARTNET_STATUS),
-    getNodes: () => ipcRenderer.invoke(IPC.ARTNET_NODES)
+    getNodes: () => ipcRenderer.invoke(IPC.ARTNET_NODES),
+    getEvents: () => ipcRenderer.invoke(IPC.ARTNET_EVENTS),
+    clearEvents: () => ipcRenderer.invoke(IPC.ARTNET_CLEAR_EVENTS)
   },
   log: {
     info: (message: string) => ipcRenderer.invoke(IPC.LOG_INFO, message),

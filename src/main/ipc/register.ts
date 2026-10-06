@@ -72,6 +72,16 @@ export function registerIpcHandlers(): void {
     return artNetEngine.getNodes()
   })
 
+  ipcMain.handle(IPC.ARTNET_EVENTS, (event) => {
+    assertTrustedSender(event)
+    return artNetEngine.getEvents()
+  })
+
+  ipcMain.handle(IPC.ARTNET_CLEAR_EVENTS, (event) => {
+    assertTrustedSender(event)
+    artNetEngine.clearEvents()
+  })
+
   ipcMain.handle(IPC.LOG_INFO, async (event, message: unknown) => {
     assertTrustedSender(event)
     await logger.info(`[renderer] ${cleanRendererMessage(message)}`)

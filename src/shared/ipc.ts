@@ -9,6 +9,8 @@ export const IPC = {
   ARTNET_POLL: 'artnet:poll',
   ARTNET_STATUS: 'artnet:status',
   ARTNET_NODES: 'artnet:nodes',
+  ARTNET_EVENTS: 'artnet:events',
+  ARTNET_CLEAR_EVENTS: 'artnet:clear-events',
   LOG_INFO: 'log:info',
   LOG_WARN: 'log:warn',
   LOG_ERROR: 'log:error'
