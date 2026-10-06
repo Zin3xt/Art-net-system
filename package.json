@@ -1,6 +1,6 @@
 {
   "name": "artnet-controller",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Desktop Art-Net lighting control system",
   "main": "./out/main/index.js",
@@ -28,6 +28,6 @@
     "electron-vite": "5.0.0",
     "tailwindcss": "4.3.3",
     "typescript": "7.0.2",
-    "vite": "8.3.2"
+    "vite": "^7.0.0"
   }
 }
