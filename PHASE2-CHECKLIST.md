@@ -15,6 +15,9 @@
 - [x] Network page auto-refreshes every 2.5 seconds
 - [x] Manual refresh control
 - [x] Adapter disappearance/reappearance reflected by refresh cycle
+- [x] Sandboxed preload is bundled as CommonJS (`out/preload/index.cjs`)
+- [x] Visible renderer fallback is shown if the preload bridge fails
+- [x] Main process logs preload/load/renderer-process failures
 - [x] No Art-Net or UDP output is sent in Phase 2
 
 ## Manual acceptance tests
@@ -23,6 +26,8 @@
 - [ ] `npm run typecheck` passes
 - [ ] `npm run build` passes
 - [ ] `npm run dev` launches successfully
+- [ ] Dashboard renders instead of a black window
+- [ ] Bottom status bar shows `IPC ready`
 - [ ] Network page lists the PC's active Ethernet/Wi-Fi IPv4 adapters
 - [ ] IPv4 address matches Windows `ipconfig`
 - [ ] Subnet mask matches Windows `ipconfig`
