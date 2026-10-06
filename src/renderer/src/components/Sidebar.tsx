@@ -58,7 +58,7 @@ export function Sidebar() {
         {items.map((item) => {
           const Icon = item.icon
           const active = item.id === currentPage
-          const available = item.phase === 1
+          const available = item.phase <= 2
           return (
             <button
               key={item.id}
@@ -76,7 +76,7 @@ export function Sidebar() {
       </nav>
 
       <div className="border-t border-zinc-800 p-3 text-[11px] text-zinc-500">
-        <div className="flex items-center gap-2"><Wrench size={13} /> Phase 1 foundation</div>
+        <div className="flex items-center gap-2"><Wrench size={13} /> Phase 2 networking</div>
       </div>
     </aside>
   )
