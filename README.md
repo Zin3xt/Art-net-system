@@ -39,7 +39,8 @@ Implemented on `feature/phase5-universe-engine`:
 - universe enable / disable flag
 - broadcast or unicast destination mode
 - discovered ESP32 / Art-Net node assignment for unicast
-- persisted target IP
+- persisted node ID, MAC and last-known IP
+- MAC-first ESP32 target resolution so DHCP IP changes can recover
 - 512-channel zero/reset buffer
 - native channel value validation 0–255
 - channel buffer preview
