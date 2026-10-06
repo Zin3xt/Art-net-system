@@ -77,8 +77,22 @@ export function UniversesPage({ nodes }: { nodes: ArtNetNode[] }) {
   }
 
   function openEdit(universe: UniverseDefinition) {
+    const currentTarget =
+      (universe.targetNodeMac
+        ? nodes.find((node) => node.mac === universe.targetNodeMac)
+        : null) ??
+      (universe.targetNodeId
+        ? nodes.find((node) => node.id === universe.targetNodeId)
+        : null) ??
+      null
+
     setEditingId(universe.id)
-    setForm(toInput(universe))
+    setForm({
+      ...toInput(universe),
+      targetNodeId: currentTarget?.id ?? universe.targetNodeId,
+      targetNodeMac: currentTarget?.mac ?? universe.targetNodeMac,
+      targetNodeIp: currentTarget?.ip ?? universe.targetNodeIp
+    })
     setError(null)
     setEditorOpen(true)
   }
