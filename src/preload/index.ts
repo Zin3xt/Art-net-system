@@ -14,6 +14,13 @@ const bridge: DesktopBridge = {
   network: {
     listAdapters: () => ipcRenderer.invoke(IPC.NETWORK_LIST)
   },
+  artnet: {
+    start: () => ipcRenderer.invoke(IPC.ARTNET_START),
+    stop: () => ipcRenderer.invoke(IPC.ARTNET_STOP),
+    poll: () => ipcRenderer.invoke(IPC.ARTNET_POLL),
+    getStatus: () => ipcRenderer.invoke(IPC.ARTNET_STATUS),
+    getNodes: () => ipcRenderer.invoke(IPC.ARTNET_NODES)
+  },
   log: {
     info: (message: string) => ipcRenderer.invoke(IPC.LOG_INFO, message),
     warn: (message: string) => ipcRenderer.invoke(IPC.LOG_WARN, message),
