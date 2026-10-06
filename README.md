@@ -1,32 +1,44 @@
-# Art-Net Controller — Phase 1
+# Art-Net Lighting Controller
 
-Electron desktop foundation for the Art-Net lighting control project.
+Electron desktop lighting-control system being developed in phases.
 
-## Included in Phase 1
+## Current development status
+
+### Phase 1 — Electron Foundation
+Implemented:
 
 - Electron + React + TypeScript + Vite
-- Tailwind CSS console-style dark UI
-- Zustand application navigation state
-- Secure preload/contextBridge API
-- `contextIsolation: true`
-- `nodeIntegration: false`
-- sandboxed renderer
-- restricted navigation/window creation
-- IPC sender-origin validation
+- Tailwind CSS console-style UI
+- secure preload/contextBridge API
+- context isolation and renderer sandbox
 - local settings persistence
-- local file logging
+- local application logging
 - Dashboard and Settings workspaces
-- placeholders for all planned console modules
-- physical lighting output deliberately disabled
+
+### Phase 2 — Network Interface Management
+Implemented on `feature/phase2-network-interface-management`:
+
+- native IPv4 network-adapter discovery
+- Ethernet / Wi-Fi / virtual / loopback classification where identifiable
+- IPv4, CIDR and subnet-mask display
+- broadcast-address calculation
+- preferred Art-Net NIC selection
+- preference persistence
+- automatic adapter refresh every 2.5 seconds
+- adapter disconnect/reconnect visibility
+- loopback protection
+
+Phase 2 does **not** open UDP port 6454 or send Art-Net packets.
 
 ## Requirements
 
-Use Node.js 22.12+ (or another version supported by the installed electron-vite version).
+Use Node.js 22.12+ or another version supported by the installed electron-vite release.
 
 ## Run
 
 ```bash
 npm install
+npm run typecheck
 npm run dev
 ```
 
@@ -37,17 +49,19 @@ npm run build
 npm run preview
 ```
 
-## Important safety rule
+## Phase 2 acceptance
 
-Phase 1 does **not** open UDP port 6454 or send Art-Net/DMX data. Physical output is introduced only after network selection and Art-Net engine phases are implemented and tested.
+See `PHASE2-CHECKLIST.md`.
 
-## Phase 2 target
+## Next phase
 
-Network Interface Management:
+Phase 3 — Art-Net Core Engine:
 
-- enumerate network adapters
-- distinguish Ethernet/Wi-Fi/loopback where possible
-- select the Art-Net interface
-- show IPv4, subnet mask and broadcast address
-- detect adapter changes
-- persist preferred interface
+- resolve the preferred local IPv4 interface
+- safe UDP socket lifecycle
+- UDP port 6454
+- ArtPoll packet encoding
+- ArtPollReply parsing
+- broadcast discovery
+- unicast/broadcast foundation
+- packet validation and logging

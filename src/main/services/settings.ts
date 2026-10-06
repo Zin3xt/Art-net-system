@@ -9,6 +9,7 @@ export const defaultSettings: AppSettings = {
   startMaximized: false,
   restoreLastShow: true,
   outputEnabledOnStartup: false,
+  preferredNetworkInterface: null,
   logLevel: 'info'
 }
 
@@ -37,6 +38,10 @@ function sanitize(input: unknown): AppSettings {
       typeof raw.outputEnabledOnStartup === 'boolean'
         ? raw.outputEnabledOnStartup
         : defaultSettings.outputEnabledOnStartup,
+    preferredNetworkInterface:
+      typeof raw.preferredNetworkInterface === 'string' && raw.preferredNetworkInterface.trim()
+        ? raw.preferredNetworkInterface.trim()
+        : null,
     logLevel: isLogLevel(raw.logLevel) ? raw.logLevel : defaultSettings.logLevel
   }
 }

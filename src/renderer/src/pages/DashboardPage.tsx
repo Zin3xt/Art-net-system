@@ -1,12 +1,12 @@
-import { CheckCircle2, CircleDashed, HardDrive, LockKeyhole, RadioTower, ServerCog } from 'lucide-react'
+import { CheckCircle2, CircleDashed, HardDrive, LockKeyhole, Network, RadioTower, ServerCog } from 'lucide-react'
 import type { AppInfo } from '../../../shared/types'
 import { Card, CardHeader } from '../components/ui/Card'
 
 const checks = [
-  ['Secure preload bridge', 'Renderer has no direct Node.js access.'],
-  ['Context isolation', 'Electron APIs stay outside the renderer context.'],
-  ['Local settings service', 'Application preferences persist under userData.'],
-  ['Local log service', 'Main/renderer events can be written to a local log file.']
+  ['Secure desktop bridge', 'Renderer remains isolated from direct Node.js access.'],
+  ['Network adapter discovery', 'Native Electron service enumerates IPv4 interfaces.'],
+  ['Subnet and broadcast data', 'Art-Net-ready addressing is calculated for each IPv4 adapter.'],
+  ['Preferred NIC persistence', 'The chosen interface is stored for the future Art-Net engine.']
 ]
 
 export function DashboardPage({ info }: { info: AppInfo | null }) {
@@ -14,19 +14,19 @@ export function DashboardPage({ info }: { info: AppInfo | null }) {
     <div className="space-y-4 p-5">
       <div>
         <h2 className="text-xl font-semibold">System Foundation</h2>
-        <p className="mt-1 text-sm text-zinc-500">Phase 1 establishes the desktop shell before any physical lighting output is enabled.</p>
+        <p className="mt-1 text-sm text-zinc-500">Phase 2 adds safe network-interface management while physical lighting output remains disabled.</p>
       </div>
 
       <div className="grid grid-cols-4 gap-3">
         <Metric icon={ServerCog} label="Application" value="Desktop Ready" detail={info ? `v${info.version}` : 'Starting…'} />
         <Metric icon={LockKeyhole} label="Security" value="Isolated" detail="Restricted bridge" />
-        <Metric icon={RadioTower} label="Art-Net" value="Not Active" detail="Scheduled Phase 3" />
-        <Metric icon={HardDrive} label="Storage" value="Local" detail="Settings + logs" />
+        <Metric icon={Network} label="Networking" value="Phase 2" detail="NIC discovery ready" />
+        <Metric icon={RadioTower} label="Art-Net" value="Not Active" detail="Phase 3" />
       </div>
 
       <div className="grid grid-cols-[1.4fr_1fr] gap-4">
         <Card>
-          <CardHeader title="Phase 1 checks" subtitle="Foundation components currently included" />
+          <CardHeader title="Phase 2 capabilities" subtitle="Network layer implemented before UDP output" />
           <div className="divide-y divide-zinc-900">
             {checks.map(([title, description]) => (
               <div key={title} className="flex items-start gap-3 px-4 py-3">
@@ -41,9 +41,9 @@ export function DashboardPage({ info }: { info: AppInfo | null }) {
         </Card>
 
         <Card>
-          <CardHeader title="Next milestone" subtitle="Phase 2 — Network Interface Management" />
+          <CardHeader title="Next milestone" subtitle="Phase 3 — Art-Net Core Engine" />
           <div className="space-y-3 p-4 text-sm text-zinc-400">
-            {['Enumerate Ethernet and Wi-Fi adapters', 'Choose the Art-Net NIC', 'Show IP, subnet and broadcast information', 'Detect interface changes'].map((item) => (
+            {['Bind UDP to the selected Art-Net NIC', 'Open Art-Net port 6454 safely', 'Send ArtPoll discovery packets', 'Parse and validate ArtPollReply packets'].map((item) => (
               <div key={item} className="flex gap-2">
                 <CircleDashed size={15} className="mt-0.5 shrink-0 text-blue-400" />
                 <span>{item}</span>
@@ -54,11 +54,11 @@ export function DashboardPage({ info }: { info: AppInfo | null }) {
       </div>
 
       <Card>
-        <CardHeader title="Output safety" subtitle="Physical lighting output remains intentionally unavailable in Phase 1" />
+        <CardHeader title="Output safety" subtitle="Phase 2 performs network inspection only; it sends no Art-Net packets." />
         <div className="grid grid-cols-3 gap-3 p-4">
           <SafetyItem title="Startup output" value="Disabled" />
-          <SafetyItem title="Blackout" value="Reserved" />
           <SafetyItem title="UDP / 6454" value="Not opened" />
+          <SafetyItem title="DMX output" value="Not implemented" />
         </div>
       </Card>
     </div>

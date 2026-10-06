@@ -11,6 +11,9 @@ const bridge: DesktopBridge = {
     get: () => ipcRenderer.invoke(IPC.SETTINGS_GET),
     save: (settings: AppSettings) => ipcRenderer.invoke(IPC.SETTINGS_SAVE, settings)
   },
+  network: {
+    listAdapters: () => ipcRenderer.invoke(IPC.NETWORK_LIST)
+  },
   log: {
     info: (message: string) => ipcRenderer.invoke(IPC.LOG_INFO, message),
     warn: (message: string) => ipcRenderer.invoke(IPC.LOG_WARN, message),
