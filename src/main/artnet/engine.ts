@@ -99,6 +99,12 @@ class ArtNetEngine {
         continue
       }
 
+      if (this.state !== 'running' || (this.startedAt !== null && node.lastSeenAt < this.startedAt)) {
+        node.health = 'offline'
+        node.online = false
+        continue
+      }
+
       const nextHealth = this.healthForAge(age)
       if (nextHealth !== node.health) {
         const previousHealth = node.health
@@ -358,9 +364,10 @@ class ArtNetEngine {
     message: string,
     details: string | null = null
   ): void {
+    const timestamp = Date.now()
     const event: ArtNetNodeEvent = {
-      id: `${Date.now()}-${++this.eventSequence}`,
-      timestamp: Date.now(),
+      id: `${timestamp}-${++this.eventSequence}`,
+      timestamp,
       type,
       severity,
       nodeId: node?.id ?? null,
