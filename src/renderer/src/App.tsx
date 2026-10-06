@@ -13,6 +13,7 @@ import { NetworkPage } from './pages/NetworkPage'
 import { NodesPage } from './pages/NodesPage'
 import { PlaceholderPage } from './pages/PlaceholderPage'
 import { SettingsPage } from './pages/SettingsPage'
+import { UniversesPage } from './pages/UniversesPage'
 import { useAppStore } from './stores/appStore'
 
 const EMPTY_ARTNET_STATUS: ArtNetEngineStatus = {
@@ -34,7 +35,6 @@ const EMPTY_ARTNET_STATUS: ArtNetEngineStatus = {
 }
 
 const phases = {
-  universes: 5,
   fixtures: 9,
   patch: 10,
   programmer: 13,
@@ -123,6 +123,7 @@ export default function App() {
         />
       )
     }
+    if (currentPage === 'universes') return <UniversesPage nodes={artnetNodes} />
     if (currentPage === 'settings') return <SettingsPage />
 
     const title = currentPage.charAt(0).toUpperCase() + currentPage.slice(1)

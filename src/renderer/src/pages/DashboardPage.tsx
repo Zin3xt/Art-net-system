@@ -1,34 +1,34 @@
-import { CheckCircle2, CircleDashed, Cpu, LockKeyhole, Network, RadioTower, ServerCog } from 'lucide-react'
+import { CheckCircle2, CircleDashed, Database, LockKeyhole, Network, RadioTower, ServerCog } from 'lucide-react'
 import type { AppInfo } from '../../../shared/types'
 import { Card, CardHeader } from '../components/ui/Card'
 
 const checks = [
-  ['Node health monitoring', 'Healthy, stale and offline states are derived from ArtPollReply timing.'],
-  ['ESP32 monitoring', 'Response count, first/last seen and recovery state are tracked per device.'],
-  ['Change detection', 'Name, firmware, capabilities, reports and port mappings are monitored for changes.'],
-  ['Event history', 'Discovery, recovery, offline, changes and engine events are retained for the session.']
+  ['Persistent universes', 'Universe definitions and 512-channel buffers are stored under Electron userData.'],
+  ['15-bit Port-Address', 'Net, Sub-Net and Universe are combined into a validated Art-Net Port-Address.'],
+  ['ESP32 assignment', 'Unicast universes can be assigned to discovered Art-Net nodes such as the ESP32.'],
+  ['Safety lock', 'Universe configuration can be enabled, but ArtDmx serialization and transmission remain absent.']
 ]
 
 export function DashboardPage({ info }: { info: AppInfo | null }) {
   return (
     <div className="space-y-4 p-5">
       <div>
-        <h2 className="text-xl font-semibold">Art-Net Node Monitoring</h2>
+        <h2 className="text-xl font-semibold">Universe Engine</h2>
         <p className="mt-1 text-sm text-zinc-500">
-          Phase 4 adds live Art-Net device health and history while keeping physical DMX output disabled.
+          Phase 5 manages Art-Net universe configuration and 512-channel buffers without transmitting physical DMX data.
         </p>
       </div>
 
       <div className="grid grid-cols-4 gap-3">
         <Metric icon={ServerCog} label="Application" value="Desktop Ready" detail={info ? `v${info.version}` : 'Starting…'} />
         <Metric icon={LockKeyhole} label="Security" value="Isolated" detail="Restricted IPC bridge" />
-        <Metric icon={Network} label="Discovery" value="UDP 6454" detail="ArtPoll / ArtPollReply" />
-        <Metric icon={Cpu} label="Monitoring" value="Phase 4" detail="ESP32 / Art-Net nodes" />
+        <Metric icon={Network} label="Discovery" value="UDP 6454" detail="ESP32 / Art-Net nodes" />
+        <Metric icon={Database} label="Universes" value="Phase 5" detail="512 channels each" />
       </div>
 
       <div className="grid grid-cols-[1.4fr_1fr] gap-4">
         <Card>
-          <CardHeader title="Phase 4 capabilities" subtitle="Device health, details and monitoring history" />
+          <CardHeader title="Phase 5 capabilities" subtitle="Universe configuration and persistent channel buffers" />
           <div className="divide-y divide-zinc-900">
             {checks.map(([title, description]) => (
               <div key={title} className="flex items-start gap-3 px-4 py-3">
@@ -43,13 +43,13 @@ export function DashboardPage({ info }: { info: AppInfo | null }) {
         </Card>
 
         <Card>
-          <CardHeader title="Next milestone" subtitle="Phase 5 — Universe Engine" />
+          <CardHeader title="Next milestone" subtitle="Phase 6 — Realtime DMX Output Engine" />
           <div className="space-y-3 p-4 text-sm text-zinc-400">
             {[
-              'Create and manage Art-Net universes',
-              'Maintain 512-channel universe buffers',
-              'Assign Port-Addresses and node destinations',
-              'Add explicit universe enable / disable state'
+              'ArtDmx packet serializer',
+              'Worker-thread refresh loop',
+              'Configurable output frame rate',
+              'Explicit Output Enable and Blackout safeguards'
             ].map((item) => (
               <div key={item} className="flex gap-2">
                 <CircleDashed size={15} className="mt-0.5 shrink-0 text-blue-400" />
@@ -63,12 +63,12 @@ export function DashboardPage({ info }: { info: AppInfo | null }) {
       <Card>
         <CardHeader
           title="Output safety"
-          subtitle="Phase 4 monitors Art-Net devices only. Fixture/channel data is not transmitted."
+          subtitle="Enabled universes are configuration-ready only. ArtDmx remains physically locked in Phase 5."
         />
         <div className="grid grid-cols-3 gap-3 p-4">
-          <SafetyItem title="ArtPoll" value="Enabled on demand" />
-          <SafetyItem title="Node monitoring" value="Enabled" />
-          <SafetyItem title="ArtDmx" value="Disabled" />
+          <SafetyItem title="Universe buffers" value="Enabled" />
+          <SafetyItem title="ESP32 assignment" value="Enabled" />
+          <SafetyItem title="ArtDmx" value="Locked" />
         </div>
       </Card>
     </div>
