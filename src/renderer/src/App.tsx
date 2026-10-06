@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
-import type { AppInfo } from '../../shared/types'
+import { useCallback, useEffect, useState } from 'react'
+import type { AppInfo, ArtNetEngineStatus, ArtNetNode } from '../../shared/types'
 import { Sidebar } from './components/Sidebar'
 import { StatusBar } from './components/StatusBar'
 import { TopBar } from './components/TopBar'
@@ -8,6 +8,21 @@ import { NetworkPage } from './pages/NetworkPage'
 import { PlaceholderPage } from './pages/PlaceholderPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { useAppStore } from './stores/appStore'
+
+const EMPTY_ARTNET_STATUS: ArtNetEngineStatus = {
+  state: 'stopped',
+  interfaceName: null,
+  localAddress: null,
+  broadcastAddress: null,
+  port: 6454,
+  startedAt: null,
+  lastPollAt: null,
+  packetsSent: 0,
+  packetsReceived: 0,
+  onlineNodes: 0,
+  totalNodes: 0,
+  lastError: null
+}
 
 const phases = {
   universes: 5,
@@ -26,6 +41,8 @@ export default function App() {
   const currentPage = useAppStore((state) => state.currentPage)
   const [info, setInfo] = useState<AppInfo | null>(null)
   const [ipcOk, setIpcOk] = useState(false)
+  const [artnetStatus, setArtnetStatus] = useState<ArtNetEngineStatus>(EMPTY_ARTNET_STATUS)
+  const [artnetNodes, setArtnetNodes] = useState<ArtNetNode[]>([])
   const bridgeAvailable = typeof window.artnetDesktop !== 'undefined'
 
   useEffect(() => {
@@ -43,22 +60,53 @@ export default function App() {
       .catch(() => setIpcOk(false))
   }, [bridgeAvailable])
 
-  const page = useMemo(() => {
+  const refreshArtNet = useCallback(async () => {
+    if (!bridgeAvailable) return
+
+    try {
+      const [status, nodes] = await Promise.all([
+        window.artnetDesktop.artnet.getStatus(),
+        window.artnetDesktop.artnet.getNodes()
+      ])
+      setArtnetStatus(status)
+      setArtnetNodes(nodes)
+    } catch {
+      // The bridge error page handles preload failures. Runtime errors are reported by the engine status.
+    }
+  }, [bridgeAvailable])
+
+  useEffect(() => {
+    if (!bridgeAvailable) return
+    void refreshArtNet()
+    const timer = window.setInterval(() => void refreshArtNet(), 1000)
+    return () => window.clearInterval(timer)
+  }, [bridgeAvailable, refreshArtNet])
+
+  function renderPage() {
     if (!bridgeAvailable) return <BridgeErrorPage />
     if (currentPage === 'dashboard') return <DashboardPage info={info} />
-    if (currentPage === 'network') return <NetworkPage />
+    if (currentPage === 'network') {
+      return (
+        <NetworkPage
+          artnetStatus={artnetStatus}
+          artnetNodes={artnetNodes}
+          onArtNetChanged={refreshArtNet}
+        />
+      )
+    }
     if (currentPage === 'settings') return <SettingsPage />
+
     const title = currentPage.charAt(0).toUpperCase() + currentPage.slice(1)
     return <PlaceholderPage title={title} phase={phases[currentPage as keyof typeof phases]} />
-  }, [bridgeAvailable, currentPage, info])
+  }
 
   return (
     <div className="flex h-screen w-screen bg-zinc-950 text-zinc-100">
       <Sidebar />
       <div className="flex min-w-0 flex-1 flex-col">
-        <TopBar />
-        <main className="min-h-0 flex-1 overflow-auto">{page}</main>
-        <StatusBar info={info} ipcOk={ipcOk} />
+        <TopBar artnetStatus={artnetStatus} />
+        <main className="min-h-0 flex-1 overflow-auto">{renderPage()}</main>
+        <StatusBar info={info} ipcOk={ipcOk} artnetStatus={artnetStatus} />
       </div>
     </div>
   )
