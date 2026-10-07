@@ -3,7 +3,10 @@ import type {
   AppInfo,
   ArtNetEngineStatus,
   ArtNetNode,
-  ArtNetNodeEvent
+  ArtNetNodeEvent,
+  DmxOutputStatus,
+  DmxUniverseRouteStatus,
+  UniverseDefinition
 } from '../../shared/types'
 import { Sidebar } from './components/Sidebar'
 import { StatusBar } from './components/StatusBar'
@@ -11,6 +14,7 @@ import { TopBar } from './components/TopBar'
 import { DashboardPage } from './pages/DashboardPage'
 import { NetworkPage } from './pages/NetworkPage'
 import { NodesPage } from './pages/NodesPage'
+import { OutputPage } from './pages/OutputPage'
 import { PlaceholderPage } from './pages/PlaceholderPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { UniversesPage } from './pages/UniversesPage'
@@ -34,6 +38,21 @@ const EMPTY_ARTNET_STATUS: ArtNetEngineStatus = {
   lastError: null
 }
 
+const EMPTY_OUTPUT_STATUS: DmxOutputStatus = {
+  state: 'disabled',
+  outputEnabled: false,
+  blackout: false,
+  tickHz: 30,
+  keepAliveMs: 900,
+  packetsSent: 0,
+  framesSent: 0,
+  universesTransmitted: 0,
+  universesBlocked: 0,
+  startedAt: null,
+  lastFrameAt: null,
+  lastError: null
+}
+
 const phases = {
   fixtures: 9,
   patch: 10,
@@ -53,6 +72,9 @@ export default function App() {
   const [artnetStatus, setArtnetStatus] = useState<ArtNetEngineStatus>(EMPTY_ARTNET_STATUS)
   const [artnetNodes, setArtnetNodes] = useState<ArtNetNode[]>([])
   const [artnetEvents, setArtnetEvents] = useState<ArtNetNodeEvent[]>([])
+  const [outputStatus, setOutputStatus] = useState<DmxOutputStatus>(EMPTY_OUTPUT_STATUS)
+  const [outputRoutes, setOutputRoutes] = useState<DmxUniverseRouteStatus[]>([])
+  const [universes, setUniverses] = useState<UniverseDefinition[]>([])
   const bridgeAvailable = typeof window.artnetDesktop !== 'undefined'
 
   useEffect(() => {
@@ -83,9 +105,30 @@ export default function App() {
       setArtnetNodes(nodes)
       setArtnetEvents(events)
     } catch {
-      // The bridge error page handles preload failures. Runtime errors are reported by the engine status.
+      // Runtime errors are surfaced by the engine status.
     }
   }, [bridgeAvailable])
+
+  const refreshOutput = useCallback(async () => {
+    if (!bridgeAvailable) return
+
+    try {
+      const [status, routes, universeList] = await Promise.all([
+        window.artnetDesktop.output.getStatus(),
+        window.artnetDesktop.output.getRoutes(),
+        window.artnetDesktop.universes.list()
+      ])
+      setOutputStatus(status)
+      setOutputRoutes(routes)
+      setUniverses(universeList)
+    } catch {
+      // Output errors are surfaced in Output status.
+    }
+  }, [bridgeAvailable])
+
+  const refreshAll = useCallback(async () => {
+    await Promise.all([refreshArtNet(), refreshOutput()])
+  }, [refreshArtNet, refreshOutput])
 
   const clearArtNetEvents = useCallback(async () => {
     if (!bridgeAvailable) return
@@ -95,10 +138,10 @@ export default function App() {
 
   useEffect(() => {
     if (!bridgeAvailable) return
-    void refreshArtNet()
-    const timer = window.setInterval(() => void refreshArtNet(), 1000)
+    void refreshAll()
+    const timer = window.setInterval(() => void refreshAll(), 1000)
     return () => window.clearInterval(timer)
-  }, [bridgeAvailable, refreshArtNet])
+  }, [bridgeAvailable, refreshAll])
 
   function renderPage() {
     if (!bridgeAvailable) return <BridgeErrorPage />
@@ -108,7 +151,7 @@ export default function App() {
         <NetworkPage
           artnetStatus={artnetStatus}
           artnetNodes={artnetNodes}
-          onArtNetChanged={refreshArtNet}
+          onArtNetChanged={refreshAll}
         />
       )
     }
@@ -118,12 +161,22 @@ export default function App() {
           artnetStatus={artnetStatus}
           nodes={artnetNodes}
           events={artnetEvents}
-          onRefresh={refreshArtNet}
+          onRefresh={refreshAll}
           onClearEvents={clearArtNetEvents}
         />
       )
     }
     if (currentPage === 'universes') return <UniversesPage nodes={artnetNodes} />
+    if (currentPage === 'output') {
+      return (
+        <OutputPage
+          outputStatus={outputStatus}
+          routes={outputRoutes}
+          universes={universes}
+          onRefresh={refreshAll}
+        />
+      )
+    }
     if (currentPage === 'settings') return <SettingsPage />
 
     const title = currentPage.charAt(0).toUpperCase() + currentPage.slice(1)
@@ -134,9 +187,14 @@ export default function App() {
     <div className="flex h-screen w-screen bg-zinc-950 text-zinc-100">
       <Sidebar />
       <div className="flex min-w-0 flex-1 flex-col">
-        <TopBar artnetStatus={artnetStatus} />
+        <TopBar artnetStatus={artnetStatus} outputStatus={outputStatus} />
         <main className="min-h-0 flex-1 overflow-auto">{renderPage()}</main>
-        <StatusBar info={info} ipcOk={ipcOk} artnetStatus={artnetStatus} />
+        <StatusBar
+          info={info}
+          ipcOk={ipcOk}
+          artnetStatus={artnetStatus}
+          outputStatus={outputStatus}
+        />
       </div>
     </div>
   )
