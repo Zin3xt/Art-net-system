@@ -59,14 +59,12 @@ export function SettingsPage() {
 
       <Card>
         <CardHeader title="Safety" subtitle="Physical output defaults" />
-        <div className="divide-y divide-zinc-900">
-          <ToggleRow
-            label="Enable lighting output on startup"
-            description="Recommended OFF. This setting is stored now but will not control hardware until the output engine exists."
-            checked={settings.outputEnabledOnStartup}
-            onChange={(v) => setSettings({ ...settings, outputEnabledOnStartup: v })}
-            danger
-          />
+        <div className="p-4">
+          <div className="text-sm text-emerald-300">Output always starts disabled</div>
+          <div className="mt-1 text-xs leading-5 text-zinc-500">
+            Phase 6 requires an explicit ENABLE OUTPUT action after every application launch.
+            This safety rule cannot be bypassed by saved settings.
+          </div>
         </div>
       </Card>
 
