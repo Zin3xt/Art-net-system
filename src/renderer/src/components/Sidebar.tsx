@@ -11,6 +11,7 @@ import {
   ListChecks,
   Network,
   PanelsTopLeft,
+  RadioTower,
   Settings,
   SlidersHorizontal,
   Sparkles,
@@ -26,6 +27,7 @@ const items: Item[] = [
   { id: 'network', label: 'Network', icon: Network, phase: 2 },
   { id: 'nodes', label: 'Nodes', icon: Cpu, phase: 4 },
   { id: 'universes', label: 'Universes', icon: PanelsTopLeft, phase: 5 },
+  { id: 'output', label: 'Output', icon: RadioTower, phase: 6 },
   { id: 'fixtures', label: 'Fixtures', icon: Lightbulb, phase: 9 },
   { id: 'patch', label: 'Patch', icon: Cable, phase: 10 },
   { id: 'programmer', label: 'Programmer', icon: SlidersHorizontal, phase: 13 },
@@ -60,7 +62,7 @@ export function Sidebar() {
         {items.map((item) => {
           const Icon = item.icon
           const active = item.id === currentPage
-          const available = item.phase <= 5
+          const available = item.phase <= 6
           return (
             <button
               key={item.id}
@@ -78,7 +80,7 @@ export function Sidebar() {
       </nav>
 
       <div className="border-t border-zinc-800 p-3 text-[11px] text-zinc-500">
-        <div className="flex items-center gap-2"><Wrench size={13} /> Phase 5 universe engine</div>
+        <div className="flex items-center gap-2"><Wrench size={13} /> Phase 6 realtime output</div>
       </div>
     </aside>
   )

@@ -260,6 +260,25 @@ class ArtNetEngine {
     return this.getStatus()
   }
 
+  async sendUnicastPacket(packet: Buffer, targetIp: string): Promise<void> {
+    if (this.state !== 'running' || !this.socket) {
+      throw new Error('Art-Net UDP engine is not running.')
+    }
+
+    if (!/^\d{1,3}(?:\.\d{1,3}){3}$/.test(targetIp)) {
+      throw new Error('Art-Net unicast target must be an IPv4 address.')
+    }
+
+    await new Promise<void>((resolve, reject) => {
+      this.socket!.send(packet, ARTNET_PORT, targetIp, (error) => {
+        if (error) reject(error)
+        else resolve()
+      })
+    })
+
+    this.packetsSent += 1
+  }
+
   async poll(): Promise<ArtNetEngineStatus> {
     if (this.state !== 'running' || !this.socket || !this.selectedAdapter?.broadcast) {
       throw new Error('Art-Net discovery is not running.')

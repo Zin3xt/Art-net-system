@@ -18,6 +18,12 @@ export const IPC = {
   UNIVERSE_DUPLICATE: 'universe:duplicate',
   UNIVERSE_RESET: 'universe:reset',
   UNIVERSE_SET_CHANNEL: 'universe:set-channel',
+  OUTPUT_ENABLE: 'output:enable',
+  OUTPUT_DISABLE: 'output:disable',
+  OUTPUT_BLACKOUT_ON: 'output:blackout-on',
+  OUTPUT_BLACKOUT_OFF: 'output:blackout-off',
+  OUTPUT_STATUS: 'output:status',
+  OUTPUT_ROUTES: 'output:routes',
   LOG_INFO: 'log:info',
   LOG_WARN: 'log:warn',
   LOG_ERROR: 'log:error'

@@ -5,6 +5,7 @@ export type ArtNetEngineState = 'stopped' | 'starting' | 'running' | 'error'
 export type ArtNetNodeHealth = 'healthy' | 'stale' | 'offline'
 export type ArtNetNodeEventSeverity = 'info' | 'warning' | 'error'
 export type UniverseOutputMode = 'broadcast' | 'unicast'
+export type DmxOutputState = 'disabled' | 'enabling' | 'enabled' | 'blackout' | 'error'
 export type ArtNetNodeEventType =
   | 'engine-started'
   | 'engine-stopped'
@@ -148,6 +149,38 @@ export interface UniverseChannelUpdate {
   value: number
 }
 
+export interface DmxUniverseRouteStatus {
+  universeId: string
+  universeName: string
+  portAddress: number
+  enabled: boolean
+  eligible: boolean
+  reason: string | null
+  targetNodeId: string | null
+  targetNodeName: string | null
+  targetIp: string | null
+  targetHealth: ArtNetNodeHealth | null
+  subscribed: boolean
+  sequence: number
+  framesSent: number
+  lastSentAt: number | null
+}
+
+export interface DmxOutputStatus {
+  state: DmxOutputState
+  outputEnabled: boolean
+  blackout: boolean
+  tickHz: number
+  keepAliveMs: number
+  packetsSent: number
+  framesSent: number
+  universesTransmitted: number
+  universesBlocked: number
+  startedAt: number | null
+  lastFrameAt: number | null
+  lastError: string | null
+}
+
 export interface DesktopBridge {
   app: {
     getInfo: () => Promise<AppInfo>
@@ -177,6 +210,14 @@ export interface DesktopBridge {
     duplicate: (id: string) => Promise<UniverseDefinition>
     reset: (id: string) => Promise<UniverseDefinition>
     setChannel: (update: UniverseChannelUpdate) => Promise<UniverseDefinition>
+  }
+  output: {
+    enable: () => Promise<DmxOutputStatus>
+    disable: () => Promise<DmxOutputStatus>
+    blackoutOn: () => Promise<DmxOutputStatus>
+    blackoutOff: () => Promise<DmxOutputStatus>
+    getStatus: () => Promise<DmxOutputStatus>
+    getRoutes: () => Promise<DmxUniverseRouteStatus[]>
   }
   log: {
     info: (message: string) => Promise<void>

@@ -28,7 +28,7 @@ const EMPTY_FORM: UniverseInput = {
   subNet: 0,
   universe: 0,
   enabled: false,
-  outputMode: 'broadcast',
+  outputMode: 'unicast',
   targetNodeId: null,
   targetNodeMac: null,
   targetNodeIp: null
@@ -207,7 +207,7 @@ export function UniversesPage({ nodes }: { nodes: ArtNetNode[] }) {
         <div>
           <h2 className="text-xl font-semibold">Universe Engine</h2>
           <p className="mt-1 text-sm text-zinc-500">
-            Configure 512-channel Art-Net universes and ESP32 destinations. ArtDmx transmission remains locked.
+            Configure 512-channel Art-Net universes and subscribed ESP32 destinations for Phase 6 live output.
           </p>
         </div>
         <div className="flex gap-2">
@@ -243,10 +243,10 @@ export function UniversesPage({ nodes }: { nodes: ArtNetNode[] }) {
         <div className="flex items-start gap-3 p-4">
           <AlertTriangle size={18} className="mt-0.5 shrink-0 text-amber-400" />
           <div>
-            <div className="text-sm font-medium text-amber-200">Physical output safety lock is active</div>
+            <div className="text-sm font-medium text-amber-200">Live output requires the Output workspace</div>
             <div className="mt-1 text-xs leading-5 text-zinc-500">
-              Enabled universes are configuration-ready only. Phase 5 does not serialize or transmit ArtDmx,
-              so changing these settings cannot move or illuminate fixtures.
+              Enabling a universe does not start transmission. Live ArtDmx starts only after an explicit
+              ENABLE OUTPUT action in the Output workspace. Art-Net 4 live data is unicast-only.
             </div>
           </div>
         </div>
@@ -382,24 +382,19 @@ function UniverseEditor({
 
         <div className="space-y-4">
           <Field label="Destination mode">
-            <div className="grid grid-cols-2 gap-2">
-              {(['broadcast', 'unicast'] as UniverseOutputMode[]).map((mode) => (
-                <button
-                  key={mode}
-                  onClick={() => onModeChange(mode)}
-                  className={`rounded-md border px-3 py-2 text-sm capitalize ${
-                    form.outputMode === mode
-                      ? 'border-blue-500/40 bg-blue-500/10 text-blue-200'
-                      : 'border-zinc-800 bg-zinc-900 text-zinc-500'
-                  }`}
-                >
-                  {mode}
-                </button>
-              ))}
+            <div className="rounded-md border border-blue-500/30 bg-blue-500/10 px-3 py-2 text-sm text-blue-200">
+              Unicast — required for Art-Net 4 ArtDmx
             </div>
           </Field>
 
-          {form.outputMode === 'unicast' ? (
+          {form.outputMode === 'broadcast' ? (
+            <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs leading-5 text-amber-200">
+              This universe was saved with the legacy broadcast option. ArtDmx output is blocked until it is converted.
+              <Button onClick={() => onModeChange('unicast')} className="mt-3">
+                Convert to Unicast
+              </Button>
+            </div>
+          ) : (
             <Field label="Target Art-Net node">
               <select
                 value={form.targetNodeId ?? ''}
@@ -414,17 +409,12 @@ function UniverseEditor({
                 ))}
               </select>
             </Field>
-          ) : (
-            <div className="rounded-lg border border-zinc-800 bg-zinc-900/40 p-3 text-xs leading-5 text-zinc-500">
-              Broadcast mode will use the selected Art-Net adapter's subnet broadcast address in the future
-              output phase. No ArtDmx is sent yet.
-            </div>
           )}
 
           <label className="flex cursor-pointer items-center justify-between rounded-lg border border-zinc-800 bg-zinc-900/40 p-3">
             <div>
               <div className="text-sm text-zinc-200">Universe enabled</div>
-              <div className="mt-1 text-xs text-zinc-600">Configuration flag only while ArtDmx is locked.</div>
+              <div className="mt-1 text-xs text-zinc-600">Marks this universe eligible for the Output workspace.</div>
             </div>
             <input
               type="checkbox"
@@ -566,13 +556,21 @@ function UniverseCard({
   )
 }
 
-type Readiness = 'disabled' | 'ready' | 'target-offline' | 'target-missing' | 'output-locked'
+type Readiness = 'disabled' | 'ready' | 'target-offline' | 'target-missing' | 'not-subscribed' | 'broadcast-blocked'
 
 function getReadiness(universe: UniverseDefinition, target: ArtNetNode | null): Readiness {
   if (!universe.enabled) return 'disabled'
-  if (universe.outputMode === 'unicast' && !target) return 'target-missing'
-  if (universe.outputMode === 'unicast' && target?.health === 'offline') return 'target-offline'
-  return 'output-locked'
+  if (universe.outputMode !== 'unicast') return 'broadcast-blocked'
+  if (!target) return 'target-missing'
+  if (target.health !== 'healthy') return 'target-offline'
+
+  const subscribed = target.ports.some(
+    (port) =>
+      (port.canInput && port.inputPortAddress === universe.portAddress) ||
+      (port.canOutput && port.outputPortAddress === universe.portAddress)
+  )
+
+  return subscribed ? 'ready' : 'not-subscribed'
 }
 
 function ReadinessBadge({ readiness }: { readiness: Readiness }) {
@@ -597,10 +595,15 @@ function ReadinessBadge({ readiness }: { readiness: Readiness }) {
       classes: 'border-red-500/30 bg-red-500/10 text-red-300',
       icon: AlertTriangle
     },
-    'output-locked': {
-      label: 'ArtDmx locked',
-      classes: 'border-blue-500/30 bg-blue-500/10 text-blue-300',
-      icon: RadioTower
+    'not-subscribed': {
+      label: 'Not subscribed',
+      classes: 'border-amber-500/30 bg-amber-500/10 text-amber-300',
+      icon: AlertTriangle
+    },
+    'broadcast-blocked': {
+      label: 'Broadcast blocked',
+      classes: 'border-red-500/30 bg-red-500/10 text-red-300',
+      icon: AlertTriangle
     }
   }
   const item = map[readiness]

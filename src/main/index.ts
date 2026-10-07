@@ -1,11 +1,13 @@
 import { app, BrowserWindow } from 'electron'
 import { join } from 'node:path'
 import { artNetEngine } from './artnet/engine'
+import { dmxOutputEngine } from './artnet/output-engine'
 import { registerIpcHandlers } from './ipc/register'
 import { logger } from './services/logger'
 import { readSettings } from './services/settings'
 
 let mainWindow: BrowserWindow | null = null
+let safeQuitInProgress = false
 
 function isAllowedNavigation(url: string): boolean {
   if (url.startsWith('file://')) return true
@@ -79,8 +81,20 @@ app.whenReady().then(async () => {
   })
 })
 
-app.on('before-quit', () => {
-  void artNetEngine.stop()
+app.on('before-quit', (event) => {
+  if (safeQuitInProgress) return
+
+  event.preventDefault()
+  safeQuitInProgress = true
+
+  void (async () => {
+    try {
+      await dmxOutputEngine.disable()
+      await artNetEngine.stop()
+    } finally {
+      app.quit()
+    }
+  })()
 })
 
 app.on('window-all-closed', () => {
