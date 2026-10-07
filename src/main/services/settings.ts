@@ -34,10 +34,9 @@ function sanitize(input: unknown): AppSettings {
     compactMode: typeof raw.compactMode === 'boolean' ? raw.compactMode : defaultSettings.compactMode,
     startMaximized: typeof raw.startMaximized === 'boolean' ? raw.startMaximized : defaultSettings.startMaximized,
     restoreLastShow: typeof raw.restoreLastShow === 'boolean' ? raw.restoreLastShow : defaultSettings.restoreLastShow,
-    outputEnabledOnStartup:
-      typeof raw.outputEnabledOnStartup === 'boolean'
-        ? raw.outputEnabledOnStartup
-        : defaultSettings.outputEnabledOnStartup,
+    // Phase 6 safety invariant: physical output always starts disabled and
+    // can only be enabled by an explicit operator action after launch.
+    outputEnabledOnStartup: false,
     preferredNetworkInterface:
       typeof raw.preferredNetworkInterface === 'string' && raw.preferredNetworkInterface.trim()
         ? raw.preferredNetworkInterface.trim()
