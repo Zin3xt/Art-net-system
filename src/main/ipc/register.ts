@@ -2,6 +2,7 @@ import { app, ipcMain } from 'electron'
 import { IPC } from '../../shared/ipc'
 import type { AppSettings, UniverseChannelUpdate, UniverseInput } from '../../shared/types'
 import { artNetEngine } from '../artnet/engine'
+import { dmxOutputEngine } from '../artnet/output-engine'
 import { logger } from '../services/logger'
 import { listNetworkAdapters } from '../services/network'
 import { readSettings, saveSettings } from '../services/settings'
@@ -19,6 +20,10 @@ import { assertTrustedSender } from './trust'
 function cleanRendererMessage(input: unknown): string {
   if (typeof input !== 'string') return '[invalid renderer log message]'
   return input.replace(/[\r\n]+/g, ' ').slice(0, 1000)
+}
+
+async function refreshOutputUniverses(): Promise<void> {
+  await dmxOutputEngine.refreshUniverses()
 }
 
 export function registerIpcHandlers(): void {
@@ -63,6 +68,7 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle(IPC.ARTNET_STOP, async (event) => {
     assertTrustedSender(event)
+    await dmxOutputEngine.disable()
     return artNetEngine.stop()
   })
 
@@ -99,6 +105,7 @@ export function registerIpcHandlers(): void {
   ipcMain.handle(IPC.UNIVERSE_CREATE, async (event, input: UniverseInput) => {
     assertTrustedSender(event)
     const universe = await createUniverse(input)
+    await refreshOutputUniverses()
     await logger.info(`Universe created: ${universe.name} (${universe.net}:${universe.subNet}:${universe.universe}).`)
     return universe
   })
@@ -106,6 +113,7 @@ export function registerIpcHandlers(): void {
   ipcMain.handle(IPC.UNIVERSE_UPDATE, async (event, id: string, input: UniverseInput) => {
     assertTrustedSender(event)
     const universe = await updateUniverse(id, input)
+    await refreshOutputUniverses()
     await logger.info(`Universe updated: ${universe.name} (${universe.net}:${universe.subNet}:${universe.universe}).`)
     return universe
   })
@@ -113,12 +121,14 @@ export function registerIpcHandlers(): void {
   ipcMain.handle(IPC.UNIVERSE_DELETE, async (event, id: string) => {
     assertTrustedSender(event)
     await deleteUniverse(id)
+    await refreshOutputUniverses()
     await logger.info(`Universe deleted: ${id}.`)
   })
 
   ipcMain.handle(IPC.UNIVERSE_DUPLICATE, async (event, id: string) => {
     assertTrustedSender(event)
     const universe = await duplicateUniverse(id)
+    await refreshOutputUniverses()
     await logger.info(`Universe duplicated as ${universe.name} (${universe.net}:${universe.subNet}:${universe.universe}).`)
     return universe
   })
@@ -126,13 +136,46 @@ export function registerIpcHandlers(): void {
   ipcMain.handle(IPC.UNIVERSE_RESET, async (event, id: string) => {
     assertTrustedSender(event)
     const universe = await resetUniverse(id)
+    await refreshOutputUniverses()
     await logger.info(`Universe buffer reset: ${universe.name}.`)
     return universe
   })
 
   ipcMain.handle(IPC.UNIVERSE_SET_CHANNEL, async (event, update: UniverseChannelUpdate) => {
     assertTrustedSender(event)
-    return setUniverseChannel(update)
+    const universe = await setUniverseChannel(update)
+    await refreshOutputUniverses()
+    return universe
+  })
+
+  ipcMain.handle(IPC.OUTPUT_ENABLE, async (event) => {
+    assertTrustedSender(event)
+    return dmxOutputEngine.enable()
+  })
+
+  ipcMain.handle(IPC.OUTPUT_DISABLE, async (event) => {
+    assertTrustedSender(event)
+    return dmxOutputEngine.disable()
+  })
+
+  ipcMain.handle(IPC.OUTPUT_BLACKOUT_ON, async (event) => {
+    assertTrustedSender(event)
+    return dmxOutputEngine.blackoutOn()
+  })
+
+  ipcMain.handle(IPC.OUTPUT_BLACKOUT_OFF, async (event) => {
+    assertTrustedSender(event)
+    return dmxOutputEngine.blackoutOff()
+  })
+
+  ipcMain.handle(IPC.OUTPUT_STATUS, (event) => {
+    assertTrustedSender(event)
+    return dmxOutputEngine.getStatus()
+  })
+
+  ipcMain.handle(IPC.OUTPUT_ROUTES, (event) => {
+    assertTrustedSender(event)
+    return dmxOutputEngine.getRoutes()
   })
 
   ipcMain.handle(IPC.LOG_INFO, async (event, message: unknown) => {
