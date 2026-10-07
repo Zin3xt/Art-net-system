@@ -32,6 +32,14 @@ const bridge: DesktopBridge = {
     reset: (id: string) => ipcRenderer.invoke(IPC.UNIVERSE_RESET, id),
     setChannel: (update: UniverseChannelUpdate) => ipcRenderer.invoke(IPC.UNIVERSE_SET_CHANNEL, update)
   },
+  output: {
+    enable: () => ipcRenderer.invoke(IPC.OUTPUT_ENABLE),
+    disable: () => ipcRenderer.invoke(IPC.OUTPUT_DISABLE),
+    blackoutOn: () => ipcRenderer.invoke(IPC.OUTPUT_BLACKOUT_ON),
+    blackoutOff: () => ipcRenderer.invoke(IPC.OUTPUT_BLACKOUT_OFF),
+    getStatus: () => ipcRenderer.invoke(IPC.OUTPUT_STATUS),
+    getRoutes: () => ipcRenderer.invoke(IPC.OUTPUT_ROUTES)
+  },
   log: {
     info: (message: string) => ipcRenderer.invoke(IPC.LOG_INFO, message),
     warn: (message: string) => ipcRenderer.invoke(IPC.LOG_WARN, message),
