@@ -56,6 +56,7 @@ export function RawDmxPage({
   const [error, setError] = useState<string | null>(null)
   const anchorRef = useRef<number | null>(null)
   const pendingRef = useRef<Map<number, number>>(new Map())
+  const pendingUniverseIdRef = useRef<string | null>(null)
   const flushTimerRef = useRef<number | null>(null)
 
   const universe = useMemo(
@@ -182,6 +183,10 @@ export function RawDmxPage({
       return next
     })
 
+    if (pendingUniverseIdRef.current && pendingUniverseIdRef.current !== universe.id) {
+      void flushPending()
+    }
+    pendingUniverseIdRef.current = universe.id
     pendingRef.current.set(channel, normalized)
     if (flushTimerRef.current !== null) return
 
@@ -192,16 +197,18 @@ export function RawDmxPage({
   }
 
   async function flushPending() {
-    if (!universe || pendingRef.current.size === 0) return
+    const targetUniverseId = pendingUniverseIdRef.current
+    if (!targetUniverseId || pendingRef.current.size === 0) return
     const pending = Array.from(pendingRef.current.entries()).map(([channel, value]) => ({
       channel,
       value
     }))
     pendingRef.current.clear()
+    pendingUniverseIdRef.current = null
 
     try {
       await window.artnetDesktop.universes.setChannels({
-        universeId: universe.id,
+        universeId: targetUniverseId,
         updates: pending
       })
       await onRefresh()
@@ -349,7 +356,6 @@ export function RawDmxPage({
     setMasterDraft(normalized)
     try {
       await window.artnetDesktop.output.setMaster(normalized)
-      await onRefresh()
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Unable to change master level.')
     }
@@ -573,7 +579,7 @@ export function RawDmxPage({
               </div>
 
               <div className="space-y-3">
-                <div className="grid grid-cols-[1fr_90px] gap-2">
+                <div className="grid grid-cols-[1fr_90px_90px] gap-2">
                   <div>
                     <Label>Selected value</Label>
                     <input
@@ -596,6 +602,25 @@ export function RawDmxPage({
                       value={selectionValue}
                       disabled={selectedChannels.length === 0}
                       onChange={(event) => setSelectionValue(clamp(Number(event.target.value), 0, 255))}
+                      onBlur={() => void applyToSelection(selectionValue)}
+                      onKeyUp={(event) => {
+                        if (event.key === 'Enter') void applyToSelection(selectionValue)
+                      }}
+                      className={inputClass}
+                    />
+                  </div>
+                  <div>
+                    <Label>0–100%</Label>
+                    <input
+                      type="number"
+                      min={0}
+                      max={100}
+                      value={Math.round((selectionValue / 255) * 100)}
+                      disabled={selectedChannels.length === 0}
+                      onChange={(event) => {
+                        const percent = clamp(Number(event.target.value), 0, 100)
+                        setSelectionValue(Math.round((percent / 100) * 255))
+                      }}
                       onBlur={() => void applyToSelection(selectionValue)}
                       className={inputClass}
                     />
