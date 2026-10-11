@@ -53,6 +53,29 @@ Implemented on `feature/phase6-realtime-dmx-output`:
 - live route / subscription / sequence / frame counters
 - single-channel diagnostic setter for Phase 6 hardware testing
 
+### Phase 7 — Raw DMX Tester
+Implemented on `feature/phase7-raw-dmx-tester`:
+
+- dedicated **Raw DMX** operator workspace
+- all 512 channels accessible from a full-universe overview
+- eight 64-channel fader banks
+- direct 0–255 editing
+- direct 0–100% editing
+- quick values: 0 / 64 / 128 / 192 / 255
+- single selection, Ctrl/Cmd multi-select and Shift range selection
+- channel search by number or persistent label
+- batch updates through one validated IPC transaction
+- fader updates throttled into ~80 ms batches
+- persistent per-channel labels
+- persistent server-enforced channel locks
+- copy/paste selected channel values
+- zero/reset full universe
+- runtime 0–100% master dimmer
+- master scaling is non-destructive to stored DMX values
+- live route / target status
+- Output Enable / Disable and Blackout always visible
+- existing Phase 6 unicast/subscriber/output safety rules remain mandatory
+
 ## Important Art-Net 4 behavior
 
 Current Art-Net 4 requires ArtDmx to be **unicast to subscribers**. Broadcast ArtDmx is not allowed.
@@ -69,18 +92,18 @@ npm run typecheck
 npm run dev
 ```
 
-## Phase 6 test workflow
+## Phase 7 test workflow
 
 1. Start Art-Net discovery from **Network**.
-2. Confirm the ESP32 is Healthy in **Nodes**.
-3. Confirm its reported output/input Port-Address matches the universe.
-4. Configure the universe as **Unicast**, Enabled, and assigned to the ESP32.
-5. Open **Output** and confirm the route says **Ready for ArtDmx**.
-6. Use the single-channel diagnostic control to keep the initial value at 0.
-7. Explicitly click **ENABLE OUTPUT**.
-8. Test a known safe DMX channel/value.
-9. Test **BLACKOUT**.
-10. Disable output before disconnecting hardware.
+2. Confirm the ESP32 is Healthy and subscribed to the selected Port-Address.
+3. Open **Raw DMX** and select the universe.
+4. Confirm the route says **Ready for ArtDmx**.
+5. Keep the master low for the first physical test.
+6. Explicitly enable output.
+7. Move one known-safe channel and verify the intended fixture response.
+8. Test multi-select, quick values, labels and channel locks.
+9. Test the non-destructive master dimmer.
+10. Test **BLACKOUT**, release it, then disable output.
 
 ## Safety
 
@@ -96,11 +119,12 @@ If output is disabled or the app is closing, the controller attempts a short zer
 - `PHASE4-CHECKLIST.md`
 - `PHASE5-CHECKLIST.md`
 - `PHASE6-CHECKLIST.md`
+- `PHASE7-CHECKLIST.md`
 
 ## Next phase
 
-Phase 7 — Raw DMX Tester:
-- 512-channel interface
-- direct 0–255 values and percentages
-- channel search / labels / selection
-- master and reset tools
+Phase 8 — Output Safety & Recovery Hardening:
+- watchdog and reconnect recovery
+- ESP32 disconnect behavior
+- emergency-stop and blackout recovery
+- long-run output timing / packet QA
