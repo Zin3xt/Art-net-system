@@ -6,6 +6,7 @@ export type PageId =
   | 'nodes'
   | 'universes'
   | 'output'
+  | 'dmx'
   | 'fixtures'
   | 'patch'
   | 'programmer'

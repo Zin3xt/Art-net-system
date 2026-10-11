@@ -1,6 +1,13 @@
 import { app, ipcMain } from 'electron'
 import { IPC } from '../../shared/ipc'
-import type { AppSettings, UniverseChannelUpdate, UniverseInput } from '../../shared/types'
+import type {
+  AppSettings,
+  UniverseChannelBatchUpdate,
+  UniverseChannelLabelUpdate,
+  UniverseChannelLockUpdate,
+  UniverseChannelUpdate,
+  UniverseInput
+} from '../../shared/types'
 import { artNetEngine } from '../artnet/engine'
 import { dmxOutputEngine } from '../artnet/output-engine'
 import { logger } from '../services/logger'
@@ -13,6 +20,9 @@ import {
   listUniverses,
   resetUniverse,
   setUniverseChannel,
+  setUniverseChannelLabel,
+  setUniverseChannelLocks,
+  setUniverseChannels,
   updateUniverse
 } from '../services/universes'
 import { assertTrustedSender } from './trust'
@@ -148,6 +158,23 @@ export function registerIpcHandlers(): void {
     return universe
   })
 
+  ipcMain.handle(IPC.UNIVERSE_SET_CHANNELS, async (event, update: UniverseChannelBatchUpdate) => {
+    assertTrustedSender(event)
+    const universe = await setUniverseChannels(update)
+    await refreshOutputUniverses()
+    return universe
+  })
+
+  ipcMain.handle(IPC.UNIVERSE_SET_CHANNEL_LABEL, async (event, update: UniverseChannelLabelUpdate) => {
+    assertTrustedSender(event)
+    return setUniverseChannelLabel(update)
+  })
+
+  ipcMain.handle(IPC.UNIVERSE_SET_CHANNEL_LOCKS, async (event, update: UniverseChannelLockUpdate) => {
+    assertTrustedSender(event)
+    return setUniverseChannelLocks(update)
+  })
+
   ipcMain.handle(IPC.OUTPUT_ENABLE, async (event) => {
     assertTrustedSender(event)
     return dmxOutputEngine.enable()
@@ -176,6 +203,11 @@ export function registerIpcHandlers(): void {
   ipcMain.handle(IPC.OUTPUT_ROUTES, (event) => {
     assertTrustedSender(event)
     return dmxOutputEngine.getRoutes()
+  })
+
+  ipcMain.handle(IPC.OUTPUT_SET_MASTER, async (event, percent: number) => {
+    assertTrustedSender(event)
+    return dmxOutputEngine.setMaster(percent)
   })
 
   ipcMain.handle(IPC.LOG_INFO, async (event, message: unknown) => {

@@ -3,19 +3,19 @@ import type { AppInfo } from '../../../shared/types'
 import { Card, CardHeader } from '../components/ui/Card'
 
 const checks = [
-  ['ArtDmx serializer', 'Builds protocol-version-14 ArtDmx packets with 512 channels and sequence numbers.'],
-  ['Subscription enforcement', 'ArtDmx is sent only to healthy nodes advertising the universe in ArtPollReply.'],
-  ['Explicit output gate', 'Every launch starts with output disabled until the operator explicitly enables it.'],
-  ['Blackout and failsafe', 'Blackout repeats zero frames; disable sends a zero burst; repeated send failures stop output.']
+  ['512-channel control', 'All DMX channels are available through banked faders and a complete universe overview.'],
+  ['Operator selection tools', 'Single, Ctrl/Cmd multi-select, Shift ranges, search, quick values and batch edits are supported.'],
+  ['Persistent metadata', 'Channel labels and locks are stored with the universe and survive application restarts.'],
+  ['Non-destructive master', 'The 0–100% master scales transmitted ArtDmx without rewriting stored channel values.']
 ]
 
 export function DashboardPage({ info }: { info: AppInfo | null }) {
   return (
     <div className="space-y-4 p-5">
       <div>
-        <h2 className="text-xl font-semibold">Realtime DMX Output Engine</h2>
+        <h2 className="text-xl font-semibold">Raw DMX Tester</h2>
         <p className="mt-1 text-sm text-zinc-500">
-          Phase 6 introduces controlled ArtDmx output to subscribed ESP32 / Art-Net nodes.
+          Phase 7 adds direct operator control of all 512 DMX channels while preserving the Phase 6 output safeguards.
         </p>
       </div>
 
@@ -23,12 +23,12 @@ export function DashboardPage({ info }: { info: AppInfo | null }) {
         <Metric icon={ServerCog} label="Application" value="Desktop Ready" detail={info ? `v${info.version}` : 'Starting…'} />
         <Metric icon={LockKeyhole} label="Startup safety" value="Output OFF" detail="Explicit enable required" />
         <Metric icon={Network} label="Art-Net" value="UDP 6454" detail="Discovery + unicast ArtDmx" />
-        <Metric icon={RadioTower} label="Live output" value="Phase 6" detail="512-channel frames" />
+        <Metric icon={RadioTower} label="Raw control" value="Phase 7" detail="512-channel tester" />
       </div>
 
       <div className="grid grid-cols-[1.4fr_1fr] gap-4">
         <Card>
-          <CardHeader title="Phase 6 capabilities" subtitle="ArtDmx output with protocol and operator safeguards" />
+          <CardHeader title="Phase 7 capabilities" subtitle="Direct channel control with persistent operator metadata" />
           <div className="divide-y divide-zinc-900">
             {checks.map(([title, description]) => (
               <div key={title} className="flex items-start gap-3 px-4 py-3">
@@ -43,13 +43,13 @@ export function DashboardPage({ info }: { info: AppInfo | null }) {
         </Card>
 
         <Card>
-          <CardHeader title="Next milestone" subtitle="Phase 7 — Raw DMX Tester" />
+          <CardHeader title="Next milestone" subtitle="Phase 8 — Output Safety & Recovery Hardening" />
           <div className="space-y-3 p-4 text-sm text-zinc-400">
             {[
-              '512-channel fader/grid interface',
-              '0–255 and percentage values',
-              'channel selection and labeling',
-              'master level and fast reset controls'
+              'Output watchdog and reconnect recovery',
+              'ESP32 disconnect / reconnect hardening',
+              'Emergency-stop and blackout recovery policy',
+              'Long-run packet / timing validation'
             ].map((item) => (
               <div key={item} className="flex gap-2">
                 <CircleDashed size={15} className="mt-0.5 shrink-0 text-blue-400" />
@@ -62,13 +62,13 @@ export function DashboardPage({ info }: { info: AppInfo | null }) {
 
       <Card>
         <CardHeader
-          title="Output policy"
-          subtitle="Art-Net 4 ArtDmx output is unicast to advertised subscribers only."
+          title="Raw DMX safety policy"
+          subtitle="Direct channel control never bypasses the Phase 6 ArtDmx routing and safety engine."
         />
         <div className="grid grid-cols-3 gap-3 p-4">
-          <SafetyItem title="Normal output" value="Changed data + 900 ms keepalive" />
-          <SafetyItem title="Blackout" value="Zero frame every 100 ms" />
-          <SafetyItem title="Disable / quit" value="3 zero frames then stop" />
+          <SafetyItem title="Channel locks" value="Server-enforced" />
+          <SafetyItem title="Master" value="Runtime 0–100% scale" />
+          <SafetyItem title="Blackout" value="Always available while output is live" />
         </div>
       </Card>
     </div>

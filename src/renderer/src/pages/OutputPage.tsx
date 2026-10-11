@@ -157,10 +157,11 @@ export function OutputPage({
           action={<OutputStateBadge status={outputStatus} />}
         />
         <div className="grid grid-cols-[1fr_auto] gap-6 p-4">
-          <div className="grid grid-cols-6 gap-3">
+          <div className="grid grid-cols-7 gap-3">
             <Metric label="State" value={outputStatus.state} />
             <Metric label="Scheduler" value={`${outputStatus.tickHz} Hz`} />
             <Metric label="Keepalive" value={`${outputStatus.keepAliveMs} ms`} />
+            <Metric label="Master" value={`${outputStatus.masterPercent}%`} />
             <Metric label="Eligible" value={String(outputStatus.universesTransmitted)} />
             <Metric label="Blocked" value={String(outputStatus.universesBlocked)} />
             <Metric label="ArtDmx TX" value={String(outputStatus.packetsSent)} />
@@ -294,7 +295,7 @@ export function OutputPage({
       <Card>
         <CardHeader
           title="Single-channel hardware test"
-          subtitle="Diagnostic control for Phase 6 verification only. Full 512-channel control is Phase 7."
+          subtitle="Kept for quick diagnostics. Full 512-channel control is now available under Raw DMX."
         />
         <div className="grid grid-cols-[1.3fr_0.6fr_0.6fr_auto] items-end gap-3 p-4">
           <Field label="Universe">

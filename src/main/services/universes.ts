@@ -3,6 +3,9 @@ import { randomUUID } from 'node:crypto'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import type {
+  UniverseChannelBatchUpdate,
+  UniverseChannelLabelUpdate,
+  UniverseChannelLockUpdate,
   UniverseChannelUpdate,
   UniverseDefinition,
   UniverseInput,
@@ -11,6 +14,7 @@ import type {
 
 const CHANNEL_COUNT = 512
 const MAX_PORT_ADDRESS = 0x7fff
+const MAX_CHANNEL_LABEL_LENGTH = 32
 
 function universeFile(): string {
   return join(app.getPath('userData'), 'universes.json')
@@ -85,6 +89,14 @@ function zeroChannels(): number[] {
   return Array.from({ length: CHANNEL_COUNT }, () => 0)
 }
 
+function emptyChannelLabels(): string[] {
+  return Array.from({ length: CHANNEL_COUNT }, () => '')
+}
+
+function emptyChannelLocks(): boolean[] {
+  return Array.from({ length: CHANNEL_COUNT }, () => false)
+}
+
 function sanitizeChannels(value: unknown): number[] {
   if (!Array.isArray(value)) return zeroChannels()
 
@@ -97,6 +109,30 @@ function sanitizeChannels(value: unknown): number[] {
         : 0
   }
   return channels
+}
+
+function sanitizeChannelLabels(value: unknown): string[] {
+  const labels = emptyChannelLabels()
+  if (!Array.isArray(value)) return labels
+
+  for (let index = 0; index < Math.min(value.length, CHANNEL_COUNT); index += 1) {
+    const raw = value[index]
+    labels[index] =
+      typeof raw === 'string'
+        ? raw.trim().replace(/[\r\n\t]+/g, ' ').slice(0, MAX_CHANNEL_LABEL_LENGTH)
+        : ''
+  }
+  return labels
+}
+
+function sanitizeChannelLocks(value: unknown): boolean[] {
+  const locks = emptyChannelLocks()
+  if (!Array.isArray(value)) return locks
+
+  for (let index = 0; index < Math.min(value.length, CHANNEL_COUNT); index += 1) {
+    locks[index] = value[index] === true
+  }
+  return locks
 }
 
 function sanitizeStoredUniverse(value: unknown): UniverseDefinition | null {
@@ -124,6 +160,8 @@ function sanitizeStoredUniverse(value: unknown): UniverseDefinition | null {
       ...input,
       portAddress: expectedPortAddress,
       channels: sanitizeChannels(raw.channels),
+      channelLabels: sanitizeChannelLabels(raw.channelLabels),
+      channelLocks: sanitizeChannelLocks(raw.channelLocks),
       createdAt: Number.isFinite(raw.createdAt) ? Number(raw.createdAt) : now,
       updatedAt: Number.isFinite(raw.updatedAt) ? Number(raw.updatedAt) : now
     }
@@ -185,6 +223,19 @@ function nextFreePortAddress(universes: UniverseDefinition[], start: number): nu
   throw new Error('No free Art-Net Port-Address is available.')
 }
 
+function findUniverseIndex(universes: UniverseDefinition[], id: unknown): number {
+  if (typeof id !== 'string' || !id.trim()) throw new Error('Universe ID is required.')
+  const index = universes.findIndex((item) => item.id === id)
+  if (index < 0) throw new Error('Universe not found.')
+  return index
+}
+
+function assertChannelUnlocked(universe: UniverseDefinition, channel: number): void {
+  if (universe.channelLocks[channel - 1]) {
+    throw new Error(`Channel ${channel} is locked. Unlock it before changing its value.`)
+  }
+}
+
 export async function listUniverses(): Promise<UniverseDefinition[]> {
   return readAll()
 }
@@ -202,6 +253,8 @@ export async function createUniverse(input: UniverseInput): Promise<UniverseDefi
     ...normalized,
     portAddress,
     channels: zeroChannels(),
+    channelLabels: emptyChannelLabels(),
+    channelLocks: emptyChannelLocks(),
     createdAt: now,
     updatedAt: now
   }
@@ -213,8 +266,7 @@ export async function createUniverse(input: UniverseInput): Promise<UniverseDefi
 export async function updateUniverse(id: string, input: UniverseInput): Promise<UniverseDefinition> {
   const normalized = normalizeInput(input)
   const universes = await readAll()
-  const index = universes.findIndex((item) => item.id === id)
-  if (index < 0) throw new Error('Universe not found.')
+  const index = findUniverseIndex(universes, id)
 
   const portAddress = calculatePortAddress(normalized.net, normalized.subNet, normalized.universe)
   assertUniquePortAddress(universes, portAddress, id)
@@ -257,6 +309,8 @@ export async function duplicateUniverse(id: string): Promise<UniverseDefinition>
     portAddress,
     enabled: false,
     channels: [...source.channels],
+    channelLabels: [...source.channelLabels],
+    channelLocks: [...source.channelLocks],
     createdAt: now,
     updatedAt: now
   }
@@ -267,8 +321,7 @@ export async function duplicateUniverse(id: string): Promise<UniverseDefinition>
 
 export async function resetUniverse(id: string): Promise<UniverseDefinition> {
   const universes = await readAll()
-  const index = universes.findIndex((item) => item.id === id)
-  if (index < 0) throw new Error('Universe not found.')
+  const index = findUniverseIndex(universes, id)
 
   const updated: UniverseDefinition = {
     ...universes[index],
@@ -287,15 +340,108 @@ export async function setUniverseChannel(update: UniverseChannelUpdate): Promise
   const value = assertIntegerRange('Channel value', update.value, 0, 255)
 
   const universes = await readAll()
-  const index = universes.findIndex((item) => item.id === update.universeId)
-  if (index < 0) throw new Error('Universe not found.')
+  const index = findUniverseIndex(universes, update.universeId)
+  const universe = universes[index]
+  assertChannelUnlocked(universe, channel)
 
-  const channels = [...universes[index].channels]
+  const channels = [...universe.channels]
   channels[channel - 1] = value
 
   const updated: UniverseDefinition = {
-    ...universes[index],
+    ...universe,
     channels,
+    updatedAt: Date.now()
+  }
+
+  universes[index] = updated
+  await writeAll(universes)
+  return updated
+}
+
+export async function setUniverseChannels(update: UniverseChannelBatchUpdate): Promise<UniverseDefinition> {
+  if (!update || typeof update !== 'object' || !Array.isArray(update.updates)) {
+    throw new Error('Channel batch update is required.')
+  }
+  if (update.updates.length === 0 || update.updates.length > CHANNEL_COUNT) {
+    throw new Error('Channel batch must contain between 1 and 512 updates.')
+  }
+
+  const universes = await readAll()
+  const index = findUniverseIndex(universes, update.universeId)
+  const universe = universes[index]
+  const channels = [...universe.channels]
+  const seen = new Set<number>()
+
+  for (const item of update.updates) {
+    const channel = assertIntegerRange('Channel', item?.channel, 1, CHANNEL_COUNT)
+    const value = assertIntegerRange('Channel value', item?.value, 0, 255)
+    if (seen.has(channel)) throw new Error(`Channel ${channel} appears more than once in the batch.`)
+    seen.add(channel)
+    assertChannelUnlocked(universe, channel)
+    channels[channel - 1] = value
+  }
+
+  const updated: UniverseDefinition = {
+    ...universe,
+    channels,
+    updatedAt: Date.now()
+  }
+
+  universes[index] = updated
+  await writeAll(universes)
+  return updated
+}
+
+export async function setUniverseChannelLabel(
+  update: UniverseChannelLabelUpdate
+): Promise<UniverseDefinition> {
+  if (!update || typeof update !== 'object') throw new Error('Channel label update is required.')
+  const channel = assertIntegerRange('Channel', update.channel, 1, CHANNEL_COUNT)
+  if (typeof update.label !== 'string') throw new Error('Channel label must be text.')
+
+  const universes = await readAll()
+  const index = findUniverseIndex(universes, update.universeId)
+  const universe = universes[index]
+  const channelLabels = [...universe.channelLabels]
+  channelLabels[channel - 1] = update.label
+    .trim()
+    .replace(/[\r\n\t]+/g, ' ')
+    .slice(0, MAX_CHANNEL_LABEL_LENGTH)
+
+  const updated: UniverseDefinition = {
+    ...universe,
+    channelLabels,
+    updatedAt: Date.now()
+  }
+
+  universes[index] = updated
+  await writeAll(universes)
+  return updated
+}
+
+export async function setUniverseChannelLocks(
+  update: UniverseChannelLockUpdate
+): Promise<UniverseDefinition> {
+  if (!update || typeof update !== 'object' || !Array.isArray(update.channels)) {
+    throw new Error('Channel lock update is required.')
+  }
+  if (update.channels.length === 0 || update.channels.length > CHANNEL_COUNT) {
+    throw new Error('Select between 1 and 512 channels.')
+  }
+
+  const universes = await readAll()
+  const index = findUniverseIndex(universes, update.universeId)
+  const universe = universes[index]
+  const channelLocks = [...universe.channelLocks]
+
+  for (const rawChannel of new Set(update.channels)) {
+    const channel = assertIntegerRange('Channel', rawChannel, 1, CHANNEL_COUNT)
+    channelLocks[channel - 1] = Boolean(update.locked)
+  }
+
+  const updated: UniverseDefinition = {
+    ...universe,
+    channelLocks,
     updatedAt: Date.now()
   }
 

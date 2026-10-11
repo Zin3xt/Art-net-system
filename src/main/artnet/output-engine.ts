@@ -45,6 +45,7 @@ class DmxOutputEngine {
   private lastFrameAt: number | null = null
   private lastError: string | null = null
   private consecutiveSendErrors = 0
+  private masterPercent = 100
 
   getStatus(): DmxOutputStatus {
     const routes = this.resolveRoutes()
@@ -54,6 +55,7 @@ class DmxOutputEngine {
       blackout: this.blackout,
       tickHz: DMX_OUTPUT_TICK_HZ,
       keepAliveMs: DMX_KEEPALIVE_MS,
+      masterPercent: this.masterPercent,
       packetsSent: this.packetsSent,
       framesSent: this.framesSent,
       universesTransmitted: routes.filter((route) => route.eligible).length,
@@ -84,6 +86,23 @@ class DmxOutputEngine {
         lastSentAt: runtime.lastSentAt
       }
     })
+  }
+
+  async setMaster(percent: number): Promise<DmxOutputStatus> {
+    if (!Number.isFinite(percent)) throw new Error('Master level must be a number from 0 to 100.')
+    const normalized = Math.max(0, Math.min(100, Math.round(percent)))
+    if (normalized === this.masterPercent) return this.getStatus()
+
+    this.masterPercent = normalized
+    for (const runtime of this.runtime.values()) {
+      runtime.lastVersion = null
+    }
+
+    await logger.info(`DMX master level set to ${normalized}%.`)
+    if (this.state === 'enabled') {
+      await this.tick(true)
+    }
+    return this.getStatus()
   }
 
   async refreshUniverses(): Promise<void> {
@@ -238,7 +257,7 @@ class DmxOutputEngine {
 
         const channels = this.blackout
           ? ZERO_DMX
-          : route.universe.channels
+          : applyMaster(route.universe.channels, this.masterPercent)
         const sequence = nextSequence(runtime.sequence)
         const packet = createArtDmxPacket(
           route.universe.portAddress,
@@ -421,6 +440,15 @@ const ZERO_DMX = Array.from({ length: 512 }, () => 0)
 function nextSequence(current: number): number {
   if (current < 1 || current >= 255) return 1
   return current + 1
+}
+
+function applyMaster(channels: readonly number[], masterPercent: number): number[] {
+  if (masterPercent >= 100) return Array.from(channels)
+  if (masterPercent <= 0) return ZERO_DMX
+
+  return channels.map((value) =>
+    Math.max(0, Math.min(255, Math.round((value * masterPercent) / 100)))
+  )
 }
 
 function delay(milliseconds: number): Promise<void> {

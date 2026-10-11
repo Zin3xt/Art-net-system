@@ -22,7 +22,7 @@ export function TopBar({
     <header className="flex h-14 items-center justify-between border-b border-zinc-800 bg-zinc-950/70 px-5">
       <div>
         <h1 className="text-sm font-semibold">Art-Net Lighting Control System</h1>
-        <p className="text-[11px] text-zinc-500">Phase 6 · Realtime DMX Output</p>
+        <p className="text-[11px] text-zinc-500">Phase 7 · Raw DMX Tester</p>
       </div>
       <div className="flex items-center gap-3">
         {outputStatus.blackout ? (

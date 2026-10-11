@@ -1,6 +1,14 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { IPC } from '../shared/ipc'
-import type { AppSettings, DesktopBridge, UniverseChannelUpdate, UniverseInput } from '../shared/types'
+import type {
+  AppSettings,
+  DesktopBridge,
+  UniverseChannelBatchUpdate,
+  UniverseChannelLabelUpdate,
+  UniverseChannelLockUpdate,
+  UniverseChannelUpdate,
+  UniverseInput
+} from '../shared/types'
 
 const bridge: DesktopBridge = {
   app: {
@@ -30,7 +38,10 @@ const bridge: DesktopBridge = {
     delete: (id: string) => ipcRenderer.invoke(IPC.UNIVERSE_DELETE, id),
     duplicate: (id: string) => ipcRenderer.invoke(IPC.UNIVERSE_DUPLICATE, id),
     reset: (id: string) => ipcRenderer.invoke(IPC.UNIVERSE_RESET, id),
-    setChannel: (update: UniverseChannelUpdate) => ipcRenderer.invoke(IPC.UNIVERSE_SET_CHANNEL, update)
+    setChannel: (update: UniverseChannelUpdate) => ipcRenderer.invoke(IPC.UNIVERSE_SET_CHANNEL, update),
+    setChannels: (update: UniverseChannelBatchUpdate) => ipcRenderer.invoke(IPC.UNIVERSE_SET_CHANNELS, update),
+    setChannelLabel: (update: UniverseChannelLabelUpdate) => ipcRenderer.invoke(IPC.UNIVERSE_SET_CHANNEL_LABEL, update),
+    setChannelLocks: (update: UniverseChannelLockUpdate) => ipcRenderer.invoke(IPC.UNIVERSE_SET_CHANNEL_LOCKS, update)
   },
   output: {
     enable: () => ipcRenderer.invoke(IPC.OUTPUT_ENABLE),
@@ -38,7 +49,8 @@ const bridge: DesktopBridge = {
     blackoutOn: () => ipcRenderer.invoke(IPC.OUTPUT_BLACKOUT_ON),
     blackoutOff: () => ipcRenderer.invoke(IPC.OUTPUT_BLACKOUT_OFF),
     getStatus: () => ipcRenderer.invoke(IPC.OUTPUT_STATUS),
-    getRoutes: () => ipcRenderer.invoke(IPC.OUTPUT_ROUTES)
+    getRoutes: () => ipcRenderer.invoke(IPC.OUTPUT_ROUTES),
+    setMaster: (percent: number) => ipcRenderer.invoke(IPC.OUTPUT_SET_MASTER, percent)
   },
   log: {
     info: (message: string) => ipcRenderer.invoke(IPC.LOG_INFO, message),
