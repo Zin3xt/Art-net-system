@@ -15,6 +15,7 @@ import { DashboardPage } from './pages/DashboardPage'
 import { NetworkPage } from './pages/NetworkPage'
 import { NodesPage } from './pages/NodesPage'
 import { OutputPage } from './pages/OutputPage'
+import { RawDmxPage } from './pages/RawDmxPage'
 import { PlaceholderPage } from './pages/PlaceholderPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { UniversesPage } from './pages/UniversesPage'
@@ -44,6 +45,7 @@ const EMPTY_OUTPUT_STATUS: DmxOutputStatus = {
   blackout: false,
   tickHz: 30,
   keepAliveMs: 900,
+  masterPercent: 100,
   packetsSent: 0,
   framesSent: 0,
   universesTransmitted: 0,
@@ -170,6 +172,16 @@ export default function App() {
     if (currentPage === 'output') {
       return (
         <OutputPage
+          outputStatus={outputStatus}
+          routes={outputRoutes}
+          universes={universes}
+          onRefresh={refreshAll}
+        />
+      )
+    }
+    if (currentPage === 'dmx') {
+      return (
+        <RawDmxPage
           outputStatus={outputStatus}
           routes={outputRoutes}
           universes={universes}
