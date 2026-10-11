@@ -49,9 +49,11 @@ The duplicate remains disabled for output safety.
 
 ## Automated acceptance
 
-- [ ] npm install passes
-- [ ] npm run typecheck passes
-- [ ] npm run build passes
+- [x] npm install passes
+- [x] npm run typecheck passes
+- [x] npm run build passes
+
+Validated by GitHub Actions on the completed Phase 7 feature branch.
 
 ## Windows / ESP32 / fixture acceptance
 
