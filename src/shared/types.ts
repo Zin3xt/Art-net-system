@@ -127,6 +127,8 @@ export interface UniverseDefinition {
   targetNodeMac: string | null
   targetNodeIp: string | null
   channels: number[]
+  channelLabels: string[]
+  channelLocks: boolean[]
   createdAt: number
   updatedAt: number
 }
@@ -147,6 +149,28 @@ export interface UniverseChannelUpdate {
   universeId: string
   channel: number
   value: number
+}
+
+export interface UniverseChannelValue {
+  channel: number
+  value: number
+}
+
+export interface UniverseChannelBatchUpdate {
+  universeId: string
+  updates: UniverseChannelValue[]
+}
+
+export interface UniverseChannelLabelUpdate {
+  universeId: string
+  channel: number
+  label: string
+}
+
+export interface UniverseChannelLockUpdate {
+  universeId: string
+  channels: number[]
+  locked: boolean
 }
 
 export interface DmxUniverseRouteStatus {
@@ -172,6 +196,7 @@ export interface DmxOutputStatus {
   blackout: boolean
   tickHz: number
   keepAliveMs: number
+  masterPercent: number
   packetsSent: number
   framesSent: number
   universesTransmitted: number
@@ -210,6 +235,9 @@ export interface DesktopBridge {
     duplicate: (id: string) => Promise<UniverseDefinition>
     reset: (id: string) => Promise<UniverseDefinition>
     setChannel: (update: UniverseChannelUpdate) => Promise<UniverseDefinition>
+    setChannels: (update: UniverseChannelBatchUpdate) => Promise<UniverseDefinition>
+    setChannelLabel: (update: UniverseChannelLabelUpdate) => Promise<UniverseDefinition>
+    setChannelLocks: (update: UniverseChannelLockUpdate) => Promise<UniverseDefinition>
   }
   output: {
     enable: () => Promise<DmxOutputStatus>
@@ -218,6 +246,7 @@ export interface DesktopBridge {
     blackoutOff: () => Promise<DmxOutputStatus>
     getStatus: () => Promise<DmxOutputStatus>
     getRoutes: () => Promise<DmxUniverseRouteStatus[]>
+    setMaster: (percent: number) => Promise<DmxOutputStatus>
   }
   log: {
     info: (message: string) => Promise<void>
