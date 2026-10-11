@@ -23,6 +23,7 @@ export function StatusBar({
         </span>
         <span>UDP {artnetStatus.state === 'running' ? '6454 LIVE' : 'OFF'}</span>
         <span>ROUTES {outputStatus.universesTransmitted}/{outputStatus.universesTransmitted + outputStatus.universesBlocked}</span>
+        <span>MASTER {outputStatus.masterPercent}%</span>
         <span>DMX TX {outputStatus.packetsSent}</span>
         <span>H {artnetStatus.healthyNodes}</span>
         <span>S {artnetStatus.staleNodes}</span>
